@@ -1,0 +1,17 @@
+{
+  "name": "食事・ボディ管理",
+  "short_name": "食事管理",
+  "description": "食事・体重・運動を一元管理するアプリ",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F7F4EE",
+  "theme_color": "#6B8E6B",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

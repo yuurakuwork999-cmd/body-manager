@@ -1,0 +1,2266 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>食事・ボディ管理</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#6B8E6B">
+<link rel="icon" href="icon.png" type="image/png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #F7F4EE;
+  --surface: #FFFFFF;
+  --surface2: #F0ECE3;
+  --border: #E2DCCF;
+  --text: #2A2520;
+  --muted: #8A8078;
+  --accent: #6B8E6B;
+  --accent-bg: #E8F0E8;
+  --accent-border: #B5C9B5;
+  --warn: #C97A3A;
+  --warn-bg: #FBF0E4;
+}
+html { font-size: 14px; }
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 400;
+  color: var(--text);
+  background: var(--bg);
+  min-height: 100dvh;
+  -webkit-text-size-adjust: 100%;
+}
+.app {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 0 16px 80px;
+  min-height: 100dvh;
+}
+.heading-lg { font-family: 'DM Serif Display', serif; font-size: 24px; }
+.heading-md { font-family: 'DM Serif Display', serif; font-size: 20px; }
+.heading-sm { font-size: 16px; font-weight: 500; }
+.text-muted { color: var(--muted); font-size: 13px; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 12px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active { opacity: 0.7; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.btn-block { display: flex; width: 100%; }
+.btn-sm { padding: 8px 14px; font-size: 13px; }
+.btn-danger { background: #E8D5D5; color: #9B4040; }
+.input-group { margin-bottom: 14px; }
+.input-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+.input-group input, .input-group select, .input-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 16px;
+  color: var(--text);
+  -webkit-appearance: none;
+  appearance: none;
+}
+.input-group textarea { resize: vertical; min-height: 60px; }
+.input-group select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238A8078' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+.input-row { display: flex; gap: 10px; }
+.input-row .input-group { flex: 1; }
+.tab-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: center;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  z-index: 100;
+}
+.tab-bar-inner { display: flex; max-width: 520px; width: 100%; }
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 0 6px;
+  font-size: 10px;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  font-family: 'Noto Sans JP', sans-serif;
+}
+.tab-item.active { color: var(--accent); }
+.tab-svg { width: 20px; height: 20px; margin-bottom: 1px; }
+.screen { display: none; padding-top: 16px; }
+.screen.active { display: block; }
+.divider { height: 1px; background: var(--border); margin: 14px 0; }
+.spacer { height: 12px; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+.badge-accent { background: var(--accent-bg); color: var(--accent); }
+.badge-warn { background: var(--warn-bg); color: var(--warn); }
+.summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.summary-item { background: var(--surface2); border-radius: 10px; padding: 12px 14px; }
+.summary-label { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+.summary-value { font-size: 20px; font-weight: 500; }
+.summary-unit { font-size: 12px; color: var(--muted); margin-left: 2px; }
+.period-selector { display: flex; gap: 6px; margin-bottom: 12px; }
+.period-btn {
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 12px;
+  cursor: pointer;
+  font-family: 'Noto Sans JP', sans-serif;
+  color: var(--muted);
+  -webkit-tap-highlight-color: transparent;
+}
+.period-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.exercise-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.exercise-item:last-child { border-bottom: none; }
+.exercise-name { font-weight: 500; }
+.exercise-detail { font-size: 12px; color: var(--muted); }
+.exercise-actions { display: flex; gap: 8px; }
+.icon-btn {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 14px;
+  -webkit-tap-highlight-color: transparent;
+}
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 200;
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal-overlay.active { display: flex; }
+.modal-content {
+  background: var(--surface);
+  border-radius: 18px 18px 0 0;
+  padding: 20px 18px;
+  max-width: 520px;
+  width: 100%;
+  max-height: 85dvh;
+  overflow-y: auto;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom, 0));
+}
+.modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 14px; }
+.graph-container { position: relative; width: 100%; height: 220px; }
+.graph-container canvas { width: 100%; height: 100%; }
+.safari-warning {
+  background: var(--warn-bg);
+  border: 1px solid var(--warn);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: var(--warn);
+  line-height: 1.6;
+}
+.safari-warning strong { font-weight: 500; }
+.record-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.record-item:last-child { border-bottom: none; }
+.record-date { color: var(--muted); min-width: 80px; }
+.record-values { display: flex; gap: 12px; }
+a { color: var(--accent); }
+.setup-step { display: none; }
+.setup-step.active { display: block; }
+.setup-progress { display: flex; gap: 6px; margin-bottom: 20px; }
+.setup-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
+.setup-dot.active { background: var(--accent); }
+.setup-dot.done { background: var(--accent); opacity: 0.5; }
+.loader {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.toggle-group { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
+.toggle-option {
+  flex: 1; padding: 10px; text-align: center;
+  font-size: 13px; background: var(--surface);
+  border: none; cursor: pointer;
+  font-family: 'Noto Sans JP', sans-serif;
+  color: var(--muted);
+  -webkit-tap-highlight-color: transparent;
+}
+.toggle-option.active { background: var(--accent); color: #fff; }
+.toggle-option + .toggle-option { border-left: 1px solid var(--border); }
+::-webkit-scrollbar { width: 0; }
+.graph-legend { display: flex; gap: 14px; justify-content: center; margin-top: 8px; font-size: 12px; color: var(--muted); }
+.legend-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+
+/* Meal type tabs */
+.meal-tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+.meal-tab {
+  flex: 1; padding: 8px 4px; text-align: center;
+  font-size: 12px; border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  font-family: 'Noto Sans JP', sans-serif;
+  color: var(--muted);
+  -webkit-tap-highlight-color: transparent;
+}
+.meal-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* Meal item */
+.meal-item {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.meal-item:last-child { border-bottom: none; }
+.meal-item-header { display: flex; justify-content: space-between; align-items: center; }
+.meal-item-name { font-weight: 500; font-size: 14px; }
+.meal-item-detail { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+
+/* Progress bar */
+.progress-bar { height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; margin-top: 4px; }
+.progress-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+.progress-fill.green { background: var(--accent); }
+.progress-fill.warn { background: var(--warn); }
+.progress-fill.over { background: #C94040; }
+
+/* Personal constant / recipe item */
+.const-item, .recipe-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+}
+.const-item:last-child, .recipe-item:last-child { border-bottom: none; }
+
+/* Today exercise toggle */
+.today-ex-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+}
+.today-ex-item:last-child { border-bottom: none; }
+.toggle-switch {
+  position: relative; width: 44px; height: 24px; cursor: pointer;
+}
+.toggle-switch input { display: none; }
+.toggle-track {
+  position: absolute; inset: 0;
+  background: var(--border); border-radius: 12px; transition: background 0.2s;
+}
+.toggle-switch input:checked + .toggle-track { background: var(--accent); }
+.toggle-knob {
+  position: absolute; top: 2px; left: 2px;
+  width: 20px; height: 20px; background: #fff;
+  border-radius: 50%; transition: left 0.2s;
+}
+.toggle-switch input:checked ~ .toggle-knob { left: 22px; }
+
+/* Analysis result */
+.analysis-result { font-size: 14px; line-height: 1.8; white-space: pre-wrap; }
+.analysis-result h3 { font-size: 15px; font-weight: 500; margin: 12px 0 4px; color: var(--accent); }
+
+/* Nutritionist bubble */
+.nutri-bubble {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.7;
+  flex: 1;
+  animation: bubbleFadeIn 0.3s ease;
+}
+.nutri-bubble::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 20px;
+  border: 8px solid transparent;
+  border-right-color: var(--border);
+  border-left: 0;
+}
+.nutri-bubble::after {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 21px;
+  border: 7px solid transparent;
+  border-right-color: var(--surface);
+  border-left: 0;
+}
+@keyframes bubbleFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pakupaku { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+.nutri-talking #nutri-img { animation: none; }
+
+/* Accordion */
+.acc-card { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.acc-body { display: none; }
+.acc-body.open { display: block; }
+.acc-arrow { font-size: 12px; color: var(--muted); transition: transform 0.2s; }
+.acc-arrow.open { transform: rotate(90deg); }
+
+/* History item */
+.history-item {
+  border-top: 1px solid var(--border);
+  padding: 10px 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.history-date { font-size: 11px; color: var(--muted); }
+.history-question { font-size: 13px; font-weight: 500; margin: 2px 0; }
+.history-answer { font-size: 12px; color: var(--muted); line-height: 1.5; display: none; white-space: pre-wrap; }
+.history-answer.open { display: block; color: var(--text); margin-top: 6px; }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+<!-- ========== Setup Screen ========== -->
+<div class="screen" id="screen-setup">
+  <div class="spacer"></div>
+  <div style="text-align:center; margin-bottom: 24px;">
+    <div class="heading-lg">Body Manager</div>
+    <div class="text-muted" style="margin-top:4px;">食事・ボディ管理アプリ</div>
+  </div>
+  <div class="setup-progress" id="setup-progress">
+    <div class="setup-dot active"></div><div class="setup-dot"></div><div class="setup-dot"></div>
+  </div>
+  <!-- Step 1: API Key -->
+  <div class="setup-step active" id="setup-step-1">
+    <div class="card">
+      <div class="heading-sm" style="margin-bottom:12px;">Gemini APIキーの設定</div>
+      <div class="input-group">
+        <label>APIキー</label>
+        <input type="password" id="setup-api-key" placeholder="AIzaSy...">
+      </div>
+      <div class="text-muted" style="margin-bottom:14px;line-height:1.8;">
+        <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>で無料取得できます<br>
+        <span style="font-size:12px;">取得方法がわからない方は → <a href="https://note.com/soundinspire/n/n0b3670caa61a" target="_blank" rel="noopener">5分で完了！取得方法をわかりやすく解説</a></span>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="setupNext(1)">次へ</button>
+    </div>
+  </div>
+  <!-- Step 2: Profile -->
+  <div class="setup-step" id="setup-step-2">
+    <div class="card">
+      <div class="heading-sm" style="margin-bottom:12px;">プロフィール設定</div>
+      <div class="input-group"><label>名前</label><input type="text" id="setup-name" placeholder="表示名"></div>
+      <div class="input-group"><label>性別</label><select id="setup-gender"><option value="">選択してください</option><option value="male">男性</option><option value="female">女性</option></select></div>
+      <div class="input-group"><label>生年月日</label><input type="date" id="setup-birthdate"></div>
+      <div class="input-row">
+        <div class="input-group"><label>身長（cm）</label><input type="number" id="setup-height" inputmode="decimal" step="0.1" placeholder="160"></div>
+        <div class="input-group"><label>体重（kg）</label><input type="number" id="setup-weight" inputmode="decimal" step="0.1" placeholder="56"></div>
+      </div>
+      <div class="divider"></div>
+      <div class="text-muted" style="margin-bottom:10px;">任意（あればより精度が上がります）</div>
+      <div class="input-row">
+        <div class="input-group"><label>体脂肪率（%）</label><input type="number" id="setup-bodyfat" inputmode="decimal" step="0.1"></div>
+        <div class="input-group"><label>骨格筋率（%）</label><input type="number" id="setup-muscle" inputmode="decimal" step="0.1"></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary" onclick="setupBack(2)">戻る</button>
+        <button class="btn btn-primary btn-block" onclick="setupNext(2)">次へ</button>
+      </div>
+    </div>
+  </div>
+  <!-- Step 3: Activity -->
+  <div class="setup-step" id="setup-step-3">
+    <div class="card">
+      <div class="heading-sm" style="margin-bottom:12px;">運動設定</div>
+      <div class="toggle-group">
+        <button class="toggle-option active" onclick="setActivityMode('simple',this)">かんたん設定</button>
+        <button class="toggle-option" onclick="setActivityMode('detailed',this)">詳細設定</button>
+      </div>
+      <div id="activity-simple">
+        <div class="input-group"><label>活動レベル</label>
+          <select id="setup-activity-level">
+            <option value="1.2">ほぼ座り仕事（デスクワーク中心）</option>
+            <option value="1.375">軽い運動あり（週1〜2回）</option>
+            <option value="1.55" selected>中程度の運動（週3〜5回）</option>
+            <option value="1.725">かなり活動的（毎日ハードに動く）</option>
+          </select>
+        </div>
+      </div>
+      <div id="activity-detailed" style="display:none;">
+        <div class="card" style="background:var(--accent-bg);border-color:var(--accent-border);margin-bottom:10px;">
+          <div class="input-group">
+            <label>運動スケジュールを入力</label>
+            <textarea id="ex-voice-input-setup" rows="3" placeholder="例：月曜はジャズダンス90分、水曜と金曜はヨガ60分、土曜はジム筋トレ1時間、ダンスはストレッチ含むから強度70%くらい"></textarea>
+          </div>
+          <div class="spacer"></div>
+          <button class="btn btn-primary btn-block btn-sm" id="ex-ai-btn-setup" onclick="analyzeExerciseVoice('setup')">AIで解析</button>
+        </div>
+        <div id="exercise-list-setup"></div>
+        <button class="btn btn-secondary btn-block btn-sm" onclick="openExerciseModal()" style="margin-top:8px;">+ 手動で種目を追加</button>
+      </div>
+      <div class="spacer"></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary" onclick="setupBack(3)">戻る</button>
+        <button class="btn btn-primary btn-block" onclick="setupNext(3)">完了</button>
+      </div>
+    </div>
+    <div class="safari-warning">
+      <strong>iPhoneをお使いの方へ</strong><br>
+      Safariの「設定 → Safari → 詳細 → Webサイトデータ」で自動削除が有効だと保存データが消えることがあります。定期的なバックアップをおすすめします。
+    </div>
+  </div>
+</div>
+
+<!-- ========== Home Screen ========== -->
+<div class="screen" id="screen-home">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div>
+      <div class="heading-lg">Body Manager</div>
+      <div class="text-muted" id="home-date"></div>
+    </div>
+    <div id="home-greeting" style="font-weight:500;"></div>
+  </div>
+  <div class="card">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;">
+      <div class="heading-sm">現在の体重</div>
+      <span class="badge badge-accent" id="home-bmi-badge"></span>
+    </div>
+    <div style="font-size:36px;font-weight:500;" id="home-weight">--</div>
+    <div class="text-muted" id="home-weight-date">記録なし</div>
+  </div>
+  <div class="summary-grid">
+    <div class="summary-item"><div class="summary-label">基礎代謝</div><div><span class="summary-value" id="home-bmr">--</span><span class="summary-unit">kcal</span></div></div>
+    <div class="summary-item"><div class="summary-label">目標カロリー</div><div><span class="summary-value" id="home-tdee">--</span><span class="summary-unit">kcal</span></div></div>
+    <div class="summary-item"><div class="summary-label">目標タンパク質</div><div><span class="summary-value" id="home-protein">--</span><span class="summary-unit">g</span></div></div>
+    <div class="summary-item"><div class="summary-label">BMI</div><div><span class="summary-value" id="home-bmi">--</span></div></div>
+  </div>
+
+  <!-- Today's intake -->
+  <div class="spacer"></div>
+  <div class="card" id="home-intake-card">
+    <div class="heading-sm" style="margin-bottom:8px;">今日の摂取</div>
+    <div style="display:flex;gap:16px;margin-bottom:8px;">
+      <div style="flex:1;">
+        <div class="summary-label">カロリー</div>
+        <div><span id="home-intake-kcal" style="font-size:20px;font-weight:500;">0</span><span class="summary-unit">kcal</span></div>
+        <div class="progress-bar"><div class="progress-fill green" id="home-kcal-bar" style="width:0%"></div></div>
+      </div>
+      <div style="flex:1;">
+        <div class="summary-label">タンパク質</div>
+        <div><span id="home-intake-protein" style="font-size:20px;font-weight:500;">0</span><span class="summary-unit">g</span></div>
+        <div class="progress-bar"><div class="progress-fill green" id="home-protein-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="text-muted" id="home-remaining"></div>
+  </div>
+
+  <div class="spacer"></div>
+
+  <!-- Today's exercise -->
+  <div class="card" id="today-exercise-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div class="heading-sm" id="today-exercise-title">今日の運動</div>
+      <span class="badge badge-accent" id="today-ex-kcal">0 kcal</span>
+    </div>
+    <div id="today-exercise-list"></div>
+  </div>
+</div>
+
+<!-- ========== Weight Screen ========== -->
+<div class="screen" id="screen-weight">
+  <div class="heading-md" style="margin-bottom:14px;">Weight Log</div>
+  <div class="card">
+    <div class="period-selector">
+      <button class="period-btn active" onclick="setPeriod('1m',this)">1ヶ月</button>
+      <button class="period-btn" onclick="setPeriod('3m',this)">3ヶ月</button>
+      <button class="period-btn" onclick="setPeriod('6m',this)">6ヶ月</button>
+      <button class="period-btn" onclick="setPeriod('all',this)">全期間</button>
+    </div>
+    <div class="graph-container"><canvas id="weight-chart"></canvas></div>
+    <div class="graph-legend">
+      <span><span class="legend-dot" style="background:#6B8E6B;"></span>体重</span>
+      <span><span class="legend-dot" style="background:#C97A3A;"></span>体脂肪率</span>
+      <span><span class="legend-dot" style="background:#7A9EC9;"></span>骨格筋率</span>
+    </div>
+  </div>
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div class="heading-sm">記録一覧</div>
+      <button class="btn btn-primary btn-sm" onclick="openWeightModal()">+ 記録</button>
+    </div>
+    <div id="weight-record-list"></div>
+    <div class="text-muted" id="weight-no-records" style="text-align:center;padding:20px 0;">まだ記録がありません</div>
+  </div>
+</div>
+
+<!-- ========== Meal Screen ========== -->
+<div class="screen" id="screen-meal">
+  <div class="heading-md" style="margin-bottom:14px;">Meal Log</div>
+
+  <!-- Date nav -->
+  <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:14px;">
+    <button class="icon-btn" onclick="changeMealDate(-1)">&larr;</button>
+    <span id="meal-date-display" style="font-weight:500;"></span>
+    <button class="icon-btn" onclick="changeMealDate(1)">&rarr;</button>
+  </div>
+
+  <!-- Meal type tabs -->
+  <div class="meal-tabs">
+    <button class="meal-tab active" onclick="setMealType('breakfast',this)">朝食</button>
+    <button class="meal-tab" onclick="setMealType('lunch',this)">昼食</button>
+    <button class="meal-tab" onclick="setMealType('dinner',this)">夕食</button>
+    <button class="meal-tab" onclick="setMealType('snack',this)">間食</button>
+  </div>
+
+  <!-- Meal input -->
+  <div class="card">
+    <div class="input-group">
+      <label>食事内容</label>
+      <textarea id="meal-input" rows="2" placeholder="例：白米150g、味噌汁、焼き鮭"></textarea>
+    </div>
+    <div class="text-muted" style="margin-bottom:8px;font-size:11px;">
+      スマホのキーボードのマイクボタンで音声入力できます
+      （<a href="https://appllio.com/ios-android-how-to-use-dictation" target="_blank" rel="noopener">やり方はこちら</a>）
+    </div>
+    <button class="btn btn-primary btn-block" id="meal-analyze-btn" onclick="analyzeMeal()">AIで栄養計算</button>
+  </div>
+
+
+  <!-- Day total -->
+  <div class="card">
+    <div class="heading-sm" style="margin-bottom:8px;">今日の合計</div>
+    <div style="display:flex;gap:20px;">
+      <div><span class="summary-label">カロリー</span><div><span style="font-size:18px;font-weight:500;" id="meal-day-kcal">0</span><span class="summary-unit">kcal</span></div></div>
+      <div><span class="summary-label">タンパク質</span><div><span style="font-size:18px;font-weight:500;" id="meal-day-protein">0</span><span class="summary-unit">g</span></div></div>
+      <div><span class="summary-label">残りカロリー</span><div><span style="font-size:18px;font-weight:500;" id="meal-day-remaining">--</span><span class="summary-unit">kcal</span></div></div>
+    </div>
+  </div>
+
+  <!-- Meal records for selected type -->
+  <div class="card">
+    <div class="heading-sm" style="margin-bottom:8px;" id="meal-list-title">朝食の記録</div>
+    <div id="meal-record-list"></div>
+    <div class="text-muted" id="meal-no-records" style="text-align:center;padding:12px 0;">まだ記録がありません</div>
+  </div>
+</div>
+
+<!-- ========== Settings Screen ========== -->
+<!-- ========== My Menu Screen ========== -->
+<div class="screen" id="screen-mymenu">
+  <div class="heading-md" style="margin-bottom:14px;">My Menu</div>
+
+  <div class="card acc-card" onclick="toggleAccordion('acc-profile')">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div class="heading-sm">プロフィール</div>
+      <span class="acc-arrow" id="acc-profile-arrow">&#9654;</span>
+    </div>
+    <div class="acc-body" id="acc-profile">
+      <div class="divider"></div>
+      <div id="settings-profile-info"></div>
+      <div style="margin-top:8px;" onclick="event.stopPropagation();">
+        <button class="btn btn-secondary btn-sm" onclick="openProfileEdit()">編集</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Accordion sections -->
+  <div class="card acc-card" onclick="toggleAccordion('acc-exercise')">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div class="heading-sm">運動設定</div>
+      <span class="acc-arrow" id="acc-exercise-arrow">&#9654;</span>
+    </div>
+    <div class="acc-body" id="acc-exercise">
+      <div class="divider"></div>
+      <div class="toggle-group" style="margin-bottom:10px;">
+        <button class="toggle-option" id="settings-toggle-simple" onclick="event.stopPropagation();switchActivityMode('simple')">かんたん設定</button>
+        <button class="toggle-option" id="settings-toggle-detailed" onclick="event.stopPropagation();switchActivityMode('detailed')">詳細設定</button>
+      </div>
+      <div id="settings-simple-area" style="display:none;">
+        <div class="input-group" onclick="event.stopPropagation();"><label>活動レベル</label>
+          <select id="settings-activity-level" onchange="saveActivityLevel()">
+            <option value="1.2">ほぼ座り仕事（デスクワーク中心）</option>
+            <option value="1.375">軽い運動あり（週1〜2回）</option>
+            <option value="1.55">中程度の運動（週3〜5回）</option>
+            <option value="1.725">かなり活動的（毎日ハードに動く）</option>
+          </select>
+        </div>
+      </div>
+      <div id="settings-detailed-area" style="display:none;">
+        <div style="background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:10px;padding:12px 14px;margin-bottom:10px;" onclick="event.stopPropagation();">
+          <div class="input-group">
+            <label>AIで運動スケジュールを設定・変更</label>
+            <textarea id="ex-voice-input-settings" rows="3" placeholder="例：月曜はジャズダンス90分、水曜と金曜はヨガ60分、ダンスの強度を70%にして"></textarea>
+          </div>
+          <button class="btn btn-primary btn-block btn-sm" id="ex-ai-btn-settings" onclick="analyzeExerciseVoice('settings')">AIで解析</button>
+        </div>
+        <div id="exercise-list-settings" onclick="event.stopPropagation();"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card acc-card" onclick="toggleAccordion('acc-foods')">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div class="heading-sm">よく食べる食材</div>
+      <span class="acc-arrow" id="acc-foods-arrow">&#9654;</span>
+    </div>
+    <div class="acc-body" id="acc-foods">
+      <div class="divider"></div>
+      <div class="text-muted" style="margin-bottom:8px;">登録しておくと食事入力時のAI解析の精度が上がります</div>
+      <div style="background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:10px;padding:12px 14px;margin-bottom:10px;" onclick="event.stopPropagation();">
+        <div class="input-group">
+          <label>AIでまとめて登録</label>
+          <textarea id="const-voice-input" rows="3" placeholder="例：プロテインドリンク1杯60kcalタンパク質10g、納豆1パック、厚揚げ150g"></textarea>
+        </div>
+        <button class="btn btn-primary btn-block btn-sm" id="const-ai-btn" onclick="analyzeConstantVoice()">AIで解析して登録</button>
+      </div>
+      <div id="constant-list" onclick="event.stopPropagation();"></div>
+    </div>
+  </div>
+
+  <div class="card acc-card" onclick="toggleAccordion('acc-recipes')">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div class="heading-sm">マイレシピ</div>
+      <span class="acc-arrow" id="acc-recipes-arrow">&#9654;</span>
+    </div>
+    <div class="acc-body" id="acc-recipes">
+      <div class="divider"></div>
+      <div class="text-muted" style="margin-bottom:8px;">レシピ名を食事入力で使うだけで自動入力されます</div>
+      <div style="background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:10px;padding:12px 14px;margin-bottom:10px;" onclick="event.stopPropagation();">
+        <div class="input-group">
+          <label>レシピをAIで登録</label>
+          <textarea id="recipe-voice-input" rows="3" placeholder="例：鶏むね肉300gとブロッコリー200gとゆで卵2個をまとめて作って、3回に分けて食べる"></textarea>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn btn-primary btn-block btn-sm" id="recipe-ai-btn" onclick="analyzeRecipeVoice()">AIで解析して登録</button>
+      </div>
+      <div id="recipe-list" onclick="event.stopPropagation();"></div>
+    </div>
+  </div>
+
+
+</div>
+
+<!-- ========== Nutritionist Screen ========== -->
+<div class="screen" id="screen-nutri">
+  <!-- Character & Speech bubble -->
+  <div style="display:flex;align-items:flex-start;gap:10px;margin-top:12px;margin-bottom:14px;">
+    <div id="nutri-character" style="flex-shrink:0;width:90px;height:90px;">
+      <img id="nutri-img" src="nutritionist_close.png" style="width:100%;height:100%;object-fit:contain;" alt="AI栄養士">
+    </div>
+    <div id="nutri-bubble" class="nutri-bubble">
+      <div id="nutri-bubble-text">こんにちは！何でも相談してくださいね。食事アドバイスや栄養の悩み、お気軽にどうぞ。</div>
+    </div>
+  </div>
+
+  <!-- Analysis buttons -->
+  <div class="card">
+    <div class="heading-sm" style="margin-bottom:8px;">食事アドバイスをもらう</div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary btn-sm" style="flex:1;" onclick="runAnalysis(30)">過去30日</button>
+      <button class="btn btn-primary btn-sm" style="flex:1;" onclick="runAnalysis(90)">過去90日</button>
+    </div>
+    <div id="analysis-btn-status"></div>
+  </div>
+
+  <!-- Chat -->
+  <div class="card">
+    <div class="heading-sm" style="margin-bottom:8px;">相談する</div>
+    <div class="input-group">
+      <textarea id="chat-input" rows="3" placeholder="例：最近タンパク質が足りてない気がする、コンビニで買えるおすすめは？"></textarea>
+    </div>
+    <button class="btn btn-primary btn-block" id="chat-send-btn" onclick="sendChat()">相談する</button>
+  </div>
+
+  <!-- History -->
+  <div class="card">
+    <div class="heading-sm" style="margin-bottom:8px;">相談・分析の履歴</div>
+    <div class="text-muted" style="font-size:11px;margin-bottom:8px;">栄養士との会話履歴は最大20件まで保存されます（タップで内容を表示）</div>
+    <div id="nutri-history"></div>
+  </div>
+</div>
+
+<!-- ========== Settings Screen ========== -->
+<div class="screen" id="screen-settings">
+  <div class="heading-md" style="margin-bottom:14px;">Settings</div>
+
+  <div class="card">
+    <div class="heading-sm" style="margin-bottom:10px;">APIキー</div>
+    <div class="input-group" style="margin-bottom:8px;">
+      <input type="password" id="settings-api-key" placeholder="Gemini APIキー">
+    </div>
+    <div class="text-muted" style="margin-bottom:8px;line-height:1.8;">
+      <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>で無料取得できます<br>
+      <span style="font-size:12px;">取得方法がわからない方は → <a href="https://note.com/soundinspire/n/n0b3670caa61a" target="_blank" rel="noopener">5分で完了！取得方法をわかりやすく解説</a></span>
+    </div>
+    <button class="btn btn-secondary btn-sm" onclick="saveApiKey()">保存</button>
+  </div>
+
+  <div class="card">
+    <div class="heading-sm" style="margin-bottom:10px;">データ管理</div>
+    <div class="safari-warning" style="margin-bottom:10px;">
+      <strong>定期的なバックアップをおすすめします</strong><br>
+      このアプリのデータはスマホのブラウザ内に保存されています。以下の場合にデータが消えることがあります：<br>
+      ・ブラウザの履歴やサイトデータを削除した時<br>
+      ・iPhoneのSafariで「Webサイトデータを削除」が自動設定になっている場合<br>
+      ・機種変更やブラウザの再インストール時<br>
+      <span style="font-size:12px;">「データを書き出す」で定期的にバックアップしておくと安心です。機種変更時は書き出したファイルを新しい端末で「データを読み込む」で復元できます。</span>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-secondary btn-sm" onclick="exportData()" style="flex:1;">データを書き出す</button>
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('import-file').click();" style="flex:1;">データを読み込む</button>
+      <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importData(event)">
+    </div>
+  </div>
+</div>
+
+<!-- ========== Tab Bar ========== -->
+<div class="tab-bar" id="tab-bar" style="display:none;">
+  <div class="tab-bar-inner">
+    <button class="tab-item active" onclick="switchTab('home')"><svg class="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-8 9 8"/><path d="M5 10v9a1 1 0 001 1h3v-5h6v5h3a1 1 0 001-1v-9"/></svg>ホーム</button>
+    <button class="tab-item" onclick="switchTab('weight')"><svg class="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="9"/></svg>体重</button>
+    <button class="tab-item" onclick="switchTab('meal')"><svg class="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>食事</button>
+    <button class="tab-item" onclick="switchTab('mymenu')"><svg class="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>マイメニュー</button>
+    <button class="tab-item" onclick="switchTab('nutri')"><svg class="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>栄養士</button>
+    <button class="tab-item" onclick="switchTab('settings')"><svg class="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>設定</button>
+  </div>
+</div>
+
+<!-- ========== Modals ========== -->
+
+<!-- Weight Record -->
+<div class="modal-overlay" id="modal-weight">
+  <div class="modal-content">
+    <div class="modal-handle"></div>
+    <div class="heading-sm" style="margin-bottom:14px;">体重を記録</div>
+    <div class="input-group"><label>記録日</label><input type="date" id="record-date"></div>
+    <div class="input-group"><label>体重（kg）</label><input type="number" id="record-weight" inputmode="decimal" step="0.1"></div>
+    <div class="input-row">
+      <div class="input-group"><label>体脂肪率（%）</label><input type="number" id="record-bodyfat" inputmode="decimal" step="0.1"></div>
+      <div class="input-group"><label>骨格筋率（%）</label><input type="number" id="record-muscle" inputmode="decimal" step="0.1"></div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-secondary" onclick="closeModal('modal-weight')">キャンセル</button>
+      <button class="btn btn-primary btn-block" onclick="saveWeightRecord()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Exercise -->
+<div class="modal-overlay" id="modal-exercise">
+  <div class="modal-content">
+    <div class="modal-handle"></div>
+    <div class="heading-sm" style="margin-bottom:14px;" id="exercise-modal-title">種目を追加</div>
+    <div class="input-group">
+      <label>曜日（複数選択可）</label>
+      <div style="display:flex;gap:4px;" id="ex-day-selector">
+        <button type="button" class="period-btn" onclick="toggleExDay(this,'mon')">月</button>
+        <button type="button" class="period-btn" onclick="toggleExDay(this,'tue')">火</button>
+        <button type="button" class="period-btn" onclick="toggleExDay(this,'wed')">水</button>
+        <button type="button" class="period-btn" onclick="toggleExDay(this,'thu')">木</button>
+        <button type="button" class="period-btn" onclick="toggleExDay(this,'fri')">金</button>
+        <button type="button" class="period-btn" onclick="toggleExDay(this,'sat')">土</button>
+        <button type="button" class="period-btn" onclick="toggleExDay(this,'sun')">日</button>
+      </div>
+    </div>
+    <div class="input-group"><label>種目名</label><input type="text" id="ex-name" placeholder="例：ジャズダンス"></div>
+    <div class="input-row">
+      <div class="input-group"><label>時間（分）</label><input type="number" id="ex-minutes" inputmode="numeric" placeholder="90"></div>
+      <div class="input-group"><label>強度補正（%）</label><input type="number" id="ex-intensity" inputmode="numeric" value="100" min="1" max="100"></div>
+    </div>
+    <div class="text-muted" style="margin-bottom:14px;">レッスン全体でフルに動かない場合は補正できます。例：バー・ストレッチ含む90分 → 70%</div>
+    <input type="hidden" id="ex-edit-id">
+    <input type="hidden" id="ex-edit-day">
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-secondary" onclick="closeModal('modal-exercise')">キャンセル</button>
+      <button class="btn btn-primary btn-block" id="ex-save-btn" onclick="saveExercise()">追加</button>
+    </div>
+  </div>
+</div>
+
+<!-- Profile Edit -->
+<div class="modal-overlay" id="modal-profile">
+  <div class="modal-content">
+    <div class="modal-handle"></div>
+    <div class="heading-sm" style="margin-bottom:14px;">プロフィール編集</div>
+    <div class="input-group"><label>名前</label><input type="text" id="edit-name"></div>
+    <div class="input-group"><label>性別</label><select id="edit-gender"><option value="male">男性</option><option value="female">女性</option></select></div>
+    <div class="input-group"><label>生年月日</label><input type="date" id="edit-birthdate"></div>
+    <div class="input-row">
+      <div class="input-group"><label>身長（cm）</label><input type="number" id="edit-height" inputmode="decimal" step="0.1"></div>
+      <div class="input-group"><label>体重（kg）</label><input type="number" id="edit-weight" inputmode="decimal" step="0.1"></div>
+    </div>
+    <div class="input-row">
+      <div class="input-group"><label>体脂肪率（%）</label><input type="number" id="edit-bodyfat" inputmode="decimal" step="0.1"></div>
+      <div class="input-group"><label>骨格筋率（%）</label><input type="number" id="edit-muscle" inputmode="decimal" step="0.1"></div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-secondary" onclick="closeModal('modal-profile')">キャンセル</button>
+      <button class="btn btn-primary btn-block" onclick="saveProfile()">保存</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Personal Constant -->
+<div class="modal-overlay" id="modal-constant">
+  <div class="modal-content">
+    <div class="modal-handle"></div>
+    <div class="heading-sm" style="margin-bottom:14px;" id="constant-modal-title">よく食べる食材を追加</div>
+    <div class="input-group"><label>食品名</label><input type="text" id="const-name" placeholder="例：厚揚げ150g"></div>
+    <div class="input-row">
+      <div class="input-group"><label>カロリー（kcal）</label><input type="number" id="const-kcal" inputmode="decimal" step="0.1"></div>
+      <div class="input-group"><label>タンパク質（g）</label><input type="number" id="const-protein" inputmode="decimal" step="0.1"></div>
+    </div>
+    <input type="hidden" id="const-edit-idx" value="-1">
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-secondary" onclick="closeModal('modal-constant')">キャンセル</button>
+      <button class="btn btn-primary btn-block" onclick="saveConstant()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Recipe -->
+<div class="modal-overlay" id="modal-recipe">
+  <div class="modal-content">
+    <div class="modal-handle"></div>
+    <div class="heading-sm" style="margin-bottom:14px;" id="recipe-modal-title">マイレシピを追加</div>
+    <div class="input-group"><label>レシピ名</label><input type="text" id="recipe-name" placeholder="例：鶏むね肉のサラダ"></div>
+    <div class="input-group"><label>材料</label><textarea id="recipe-ingredients" rows="2" placeholder="鶏むね肉100g、レタス、トマト..."></textarea></div>
+    <div class="input-group"><label>1食分の分量メモ</label><input type="text" id="recipe-serving" placeholder="例：全体の1/3量、70gずつ"></div>
+    <div class="input-row">
+      <div class="input-group"><label>1食分カロリー（kcal）</label><input type="number" id="recipe-kcal" inputmode="decimal" step="0.1"></div>
+      <div class="input-group"><label>1食分タンパク質（g）</label><input type="number" id="recipe-protein" inputmode="decimal" step="0.1"></div>
+    </div>
+    <input type="hidden" id="recipe-edit-idx" value="-1">
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-secondary" onclick="closeModal('modal-recipe')">キャンセル</button>
+      <button class="btn btn-primary btn-block" onclick="saveRecipe()">保存</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<script>
+// ===== State =====
+const STORAGE_KEY = 'bodyManagerData';
+let state = loadState();
+
+function getDefaultState() {
+  return {
+    apiKey: '', profile: { name:'', gender:'', birthdate:'', height:0, weight:0, bodyFat:null, muscleMass:null },
+    activityMode: 'simple', activityLevel: 1.55, exercises: [],
+    weeklySchedule: { mon:[], tue:[], wed:[], thu:[], fri:[], sat:[], sun:[] },
+    bodyRecords: [], mealRecords: [], recipes: [], personalConstants: [],
+    setupComplete: false
+  };
+}
+function loadState() {
+  try { const r = localStorage.getItem(STORAGE_KEY); if (r) return { ...getDefaultState(), ...JSON.parse(r) }; } catch(e) {}
+  return getDefaultState();
+}
+function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+// ===== Navigation =====
+let currentTab = 'home';
+let currentGraphPeriod = '1m';
+let setupActivityMode = 'simple';
+let mealDate = formatDate(new Date());
+let mealType = 'breakfast';
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + tab).classList.add('active');
+  const tabs = ['home','weight','meal','mymenu','nutri','settings'];
+  document.querySelectorAll('.tab-item').forEach((t, i) => t.classList.toggle('active', tabs[i] === tab));
+  if (tab === 'home') renderHome();
+  if (tab === 'weight') renderWeightScreen();
+  if (tab === 'meal') renderMealScreen();
+  if (tab === 'mymenu') renderMyMenu();
+  if (tab === 'nutri') renderNutriScreen();
+  if (tab === 'settings') renderSettings();
+}
+function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+
+// ===== Setup =====
+let setupStep = 1;
+function setupNext(step) {
+  if (step === 1) {
+    const key = document.getElementById('setup-api-key').value.trim();
+    if (!key) { alert('APIキーを入力してください'); return; }
+    state.apiKey = key; setupStep = 2;
+  } else if (step === 2) {
+    const name = document.getElementById('setup-name').value.trim();
+    const gender = document.getElementById('setup-gender').value;
+    const birthdate = document.getElementById('setup-birthdate').value;
+    const height = parseFloat(document.getElementById('setup-height').value);
+    const weight = parseFloat(document.getElementById('setup-weight').value);
+    if (!name||!gender||!birthdate||!height||!weight) { alert('必須項目をすべて入力してください'); return; }
+    state.profile = { name, gender, birthdate, height, weight,
+      bodyFat: parseFloat(document.getElementById('setup-bodyfat').value)||null,
+      muscleMass: parseFloat(document.getElementById('setup-muscle').value)||null };
+    const today = formatDate(new Date());
+    if (!state.bodyRecords.find(r => r.date === today))
+      state.bodyRecords.push({ date: today, weight, bodyFat: state.profile.bodyFat, muscleMass: state.profile.muscleMass });
+    setupStep = 3;
+  } else if (step === 3) {
+    if (setupActivityMode === 'simple') { state.activityMode = 'simple'; state.activityLevel = parseFloat(document.getElementById('setup-activity-level').value); }
+    else { state.activityMode = 'detailed'; }
+    state.setupComplete = true; saveState();
+    document.getElementById('tab-bar').style.display = '';
+    switchTab('home'); return;
+  }
+  saveState(); updateSetupUI();
+}
+function setupBack(step) { setupStep = step - 1; updateSetupUI(); }
+function updateSetupUI() {
+  document.querySelectorAll('.setup-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('setup-step-' + setupStep).classList.add('active');
+  document.querySelectorAll('.setup-dot').forEach((d, i) => {
+    d.classList.remove('active','done');
+    if (i+1 === setupStep) d.classList.add('active');
+    else if (i+1 < setupStep) d.classList.add('done');
+  });
+}
+function setActivityMode(mode, el) {
+  setupActivityMode = mode;
+  el.parentElement.querySelectorAll('.toggle-option').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('activity-simple').style.display = mode === 'simple' ? '' : 'none';
+  document.getElementById('activity-detailed').style.display = mode === 'detailed' ? '' : 'none';
+  if (mode === 'detailed') renderExerciseList('exercise-list-setup');
+}
+
+// ===== Calculations =====
+function calcAge(bd) { const b=new Date(bd),t=new Date(); let a=t.getFullYear()-b.getFullYear(); if(t.getMonth()<b.getMonth()||(t.getMonth()===b.getMonth()&&t.getDate()<b.getDate())) a--; return a; }
+function calcBMI(w,h) { const m=h/100; return w/(m*m); }
+function calcBMR(p) {
+  const age = calcAge(p.birthdate);
+  if (p.bodyFat) { const lbm=p.weight*(1-p.bodyFat/100); return 370+21.6*lbm; }
+  return p.gender==='female' ? 447.593+9.247*p.weight+3.098*p.height-4.330*age : 88.362+13.397*p.weight+4.799*p.height-5.677*age;
+}
+function calcTDEE(profileOverride) {
+  const p = profileOverride || getCalcProfile();
+  const bmr = calcBMR(p);
+  if (state.activityMode === 'simple') return bmr * state.activityLevel;
+  // weeklySchedule対応
+  const ws = state.weeklySchedule;
+  if (ws && Object.values(ws).some(d => d.length > 0)) {
+    let weeklyKcal = 0;
+    Object.values(ws).forEach(dayExercises => {
+      dayExercises.forEach(ex => { weeklyKcal += (ex.kcalPerSession||0) * (ex.intensityPercent||100) / 100; });
+    });
+    return bmr + weeklyKcal / 7;
+  }
+  // 旧exercises形式の互換
+  let wk = 0;
+  state.exercises.forEach(ex => { wk += (ex.kcalPerSession||0)*(ex.intensityPercent/100)*ex.timesPerWeek; });
+  return bmr + wk / 7;
+}
+function calcProteinTarget(p) {
+  if (p.bodyFat) return p.weight*(1-p.bodyFat/100)*2.0;
+  return p.weight * 1.6;
+}
+function getBMICategory(bmi) { if(bmi<18.5)return'低体重'; if(bmi<25)return'普通体重'; if(bmi<30)return'肥満(1度)'; return'肥満(2度以上)'; }
+function getLatestWeight() {
+  if (!state.bodyRecords.length) return null;
+  return [...state.bodyRecords].sort((a,b)=>b.date.localeCompare(a.date))[0];
+}
+function getCalcProfile() {
+  const latest = getLatestWeight();
+  const p = { ...state.profile };
+  if (latest) { p.weight = latest.weight; if (latest.bodyFat) p.bodyFat = latest.bodyFat; if (latest.muscleMass) p.muscleMass = latest.muscleMass; }
+  return p;
+}
+
+// ===== Day totals =====
+function getDayMeals(date) { return state.mealRecords.filter(m => m.date === date); }
+function getDayTotals(date) {
+  const meals = getDayMeals(date);
+  let kcal = 0, protein = 0;
+  meals.forEach(m => { (m.items||[]).forEach(it => { kcal += it.kcal||0; protein += it.protein_g||0; }); });
+  return { kcal: Math.round(kcal), protein: Math.round(protein) };
+}
+
+// Today exercise adjustment
+function getTodayExerciseOverrides() {
+  const key = 'todayExOverride_' + formatDate(new Date());
+  try { return JSON.parse(localStorage.getItem(key)) || {}; } catch(e) { return {}; }
+}
+function saveTodayExerciseOverrides(obj) {
+  localStorage.setItem('todayExOverride_' + formatDate(new Date()), JSON.stringify(obj));
+}
+
+// ===== Home Screen =====
+function renderHome() {
+  const today = new Date();
+  const wd = ['日','月','火','水','木','金','土'];
+  document.getElementById('home-date').textContent = `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日（${wd[today.getDay()]}）`;
+  document.getElementById('home-greeting').textContent = state.profile.name || '';
+  const p = getCalcProfile();
+  const latest = getLatestWeight();
+  document.getElementById('home-weight').textContent = p.weight ? p.weight.toFixed(1)+' kg' : '--';
+  document.getElementById('home-weight-date').textContent = latest ? formatDateJP(latest.date)+' の記録' : '記録なし';
+  if (p.weight && p.height) {
+    const bmi = calcBMI(p.weight, p.height);
+    document.getElementById('home-bmi').textContent = bmi.toFixed(1);
+    document.getElementById('home-bmi-badge').textContent = 'BMI '+bmi.toFixed(1)+' '+getBMICategory(bmi);
+    const bmr = calcBMR(p), tdee = calcTDEE(p), prot = calcProteinTarget(p);
+    document.getElementById('home-bmr').textContent = Math.round(bmr);
+    document.getElementById('home-tdee').textContent = Math.round(tdee);
+    document.getElementById('home-protein').textContent = Math.round(prot);
+
+    // Today intake
+    const todayStr = formatDate(today);
+    const totals = getDayTotals(todayStr);
+    document.getElementById('home-intake-kcal').textContent = totals.kcal;
+    document.getElementById('home-intake-protein').textContent = totals.protein;
+    const kcalPct = Math.min(100, Math.round(totals.kcal / tdee * 100));
+    const protPct = Math.min(100, Math.round(totals.protein / prot * 100));
+    const kcalBar = document.getElementById('home-kcal-bar');
+    kcalBar.style.width = kcalPct + '%';
+    kcalBar.className = 'progress-fill ' + (kcalPct > 100 ? 'over' : kcalPct > 85 ? 'warn' : 'green');
+    const protBar = document.getElementById('home-protein-bar');
+    protBar.style.width = protPct + '%';
+    protBar.className = 'progress-fill ' + (protPct >= 100 ? 'green' : protPct > 70 ? 'warn' : 'green');
+    const remaining = Math.round(tdee) - totals.kcal;
+    document.getElementById('home-remaining').textContent = remaining >= 0 ? `あと ${remaining} kcal` : `${Math.abs(remaining)} kcal オーバー`;
+  }
+  renderTodayExercise();
+}
+
+// ===== Weight Screen =====
+function renderWeightScreen() { renderWeightGraph(); renderWeightList(); }
+function renderWeightList() {
+  const list = document.getElementById('weight-record-list');
+  const nr = document.getElementById('weight-no-records');
+  const sorted = [...state.bodyRecords].sort((a,b)=>b.date.localeCompare(a.date));
+  if (!sorted.length) { list.innerHTML=''; nr.style.display=''; return; }
+  nr.style.display='none';
+  list.innerHTML = sorted.slice(0,30).map(r=>`
+    <div class="record-item">
+      <span class="record-date">${formatDateShort(r.date)}</span>
+      <div class="record-values">
+        <span>${r.weight.toFixed(1)}kg</span>
+        ${r.bodyFat?`<span style="color:var(--warn);">${r.bodyFat.toFixed(1)}%</span>`:''}
+        ${r.muscleMass?`<span style="color:#7A9EC9;">${r.muscleMass.toFixed(1)}%</span>`:''}
+      </div>
+      <button class="icon-btn" onclick="deleteRecord('${r.date}')">&times;</button>
+    </div>`).join('');
+}
+function deleteRecord(date) {
+  if (!confirm(formatDateJP(date)+' の記録を削除しますか？')) return;
+  state.bodyRecords = state.bodyRecords.filter(r=>r.date!==date);
+  saveState(); renderWeightScreen();
+}
+function setPeriod(p,el) {
+  currentGraphPeriod = p;
+  document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active'); renderWeightGraph();
+}
+
+// ===== Weight Graph =====
+function renderWeightGraph() {
+  const canvas = document.getElementById('weight-chart');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio||1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width*dpr; canvas.height = rect.height*dpr;
+  ctx.scale(dpr,dpr);
+  const W=rect.width, H=rect.height, pad={top:20,right:16,bottom:30,left:44};
+  ctx.clearRect(0,0,W,H);
+  let records = [...state.bodyRecords].sort((a,b)=>a.date.localeCompare(b.date));
+  if (!records.length) { ctx.fillStyle='#8A8078'; ctx.font='13px "Noto Sans JP"'; ctx.textAlign='center'; ctx.fillText('データなし',W/2,H/2); return; }
+  const now=new Date(); let cutoff=null;
+  if(currentGraphPeriod==='1m') cutoff=new Date(now.getFullYear(),now.getMonth()-1,now.getDate());
+  else if(currentGraphPeriod==='3m') cutoff=new Date(now.getFullYear(),now.getMonth()-3,now.getDate());
+  else if(currentGraphPeriod==='6m') cutoff=new Date(now.getFullYear(),now.getMonth()-6,now.getDate());
+  if(cutoff) records=records.filter(r=>r.date>=formatDate(cutoff));
+  if(!records.length) { ctx.fillStyle='#8A8078'; ctx.font='13px "Noto Sans JP"'; ctx.textAlign='center'; ctx.fillText('この期間のデータなし',W/2,H/2); return; }
+  const plotW=W-pad.left-pad.right, plotH=H-pad.top-pad.bottom;
+  const weights=records.map(r=>r.weight);
+  let wMin=Math.min(...weights)-1, wMax=Math.max(...weights)+1;
+  if(wMax-wMin<2){wMin-=1;wMax+=1;}
+  ctx.strokeStyle='#E2DCCF'; ctx.lineWidth=0.5;
+  for(let i=0;i<=4;i++){
+    const y=pad.top+(plotH/4)*i;
+    ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(W-pad.right,y);ctx.stroke();
+    ctx.fillStyle='#8A8078';ctx.font='11px "Noto Sans JP"';ctx.textAlign='right';
+    ctx.fillText((wMax-(wMax-wMin)*(i/4)).toFixed(1),pad.left-6,y+4);
+  }
+  const xCount=Math.min(records.length,6), step=Math.max(1,Math.floor((records.length-1)/(xCount-1)));
+  ctx.textAlign='center';
+  for(let i=0;i<records.length;i+=step){
+    const x=pad.left+(records.length===1?plotW/2:(i/(records.length-1))*plotW);
+    ctx.fillStyle='#8A8078';ctx.font='11px "Noto Sans JP"';
+    ctx.fillText(records[i].date.slice(5).replace('-','/'),x,H-pad.bottom+16);
+  }
+  function drawLine(data,color,getVal){
+    const pts=[];
+    data.forEach((r,idx)=>{ const v=getVal(r); if(v==null)return;
+      const x=pad.left+(data.length===1?plotW/2:(idx/(data.length-1))*plotW);
+      const y=pad.top+plotH*(1-(v-wMin)/(wMax-wMin));
+      pts.push({x,y});
+    });
+    if(!pts.length)return;
+    ctx.strokeStyle=color;ctx.lineWidth=2;ctx.lineJoin='round';ctx.setLineDash([]);
+    ctx.beginPath();pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));ctx.stroke();
+    pts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();});
+  }
+  drawLine(records,'#6B8E6B',r=>r.weight);
+  const hasBF=records.some(r=>r.bodyFat), hasMM=records.some(r=>r.muscleMass);
+  if(hasBF||hasMM){
+    const pv=[];records.forEach(r=>{if(r.bodyFat)pv.push(r.bodyFat);if(r.muscleMass)pv.push(r.muscleMass);});
+    const pMin=Math.min(...pv)-2,pMax=Math.max(...pv)+2;
+    function drawPct(color,getVal){
+      const pts=[];
+      records.forEach((r,idx)=>{const v=getVal(r);if(v==null)return;
+        const x=pad.left+(records.length===1?plotW/2:(idx/(records.length-1))*plotW);
+        const y=pad.top+plotH*(1-(v-pMin)/(pMax-pMin));pts.push({x,y});});
+      if(!pts.length)return;
+      ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+      ctx.beginPath();pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));ctx.stroke();ctx.setLineDash([]);
+      pts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,2.5,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();});
+    }
+    if(hasBF)drawPct('#C97A3A',r=>r.bodyFat);
+    if(hasMM)drawPct('#7A9EC9',r=>r.muscleMass);
+    ctx.textAlign='left';
+    for(let i=0;i<=4;i++){const y=pad.top+(plotH/4)*i;ctx.fillStyle='#8A8078';ctx.font='10px "Noto Sans JP"';
+      ctx.fillText((pMax-(pMax-pMin)*(i/4)).toFixed(0)+'%',W-pad.right+4,y+4);}
+  }
+}
+
+// ===== Weight Modal =====
+function openWeightModal() {
+  document.getElementById('record-date').value = formatDate(new Date());
+  const l = getLatestWeight();
+  document.getElementById('record-weight').value = l?l.weight:'';
+  document.getElementById('record-bodyfat').value = '';
+  document.getElementById('record-muscle').value = '';
+  openModal('modal-weight');
+}
+function saveWeightRecord() {
+  const date=document.getElementById('record-date').value, weight=parseFloat(document.getElementById('record-weight').value);
+  if(!date||!weight){alert('日付と体重は必須です');return;}
+  const bodyFat=parseFloat(document.getElementById('record-bodyfat').value)||null;
+  const muscleMass=parseFloat(document.getElementById('record-muscle').value)||null;
+  const idx=state.bodyRecords.findIndex(r=>r.date===date);
+  if(idx>=0) state.bodyRecords[idx]={date,weight,bodyFat,muscleMass};
+  else state.bodyRecords.push({date,weight,bodyFat,muscleMass});
+  const latest=getLatestWeight();
+  if(latest){state.profile.weight=latest.weight;if(latest.bodyFat)state.profile.bodyFat=latest.bodyFat;if(latest.muscleMass)state.profile.muscleMass=latest.muscleMass;}
+  saveState(); closeModal('modal-weight');
+  if(currentTab==='weight')renderWeightScreen();
+  if(currentTab==='home')renderHome();
+}
+
+// ===== Meal Screen =====
+const mealTypeNames = { breakfast:'朝食', lunch:'昼食', dinner:'夕食', snack:'間食' };
+
+function renderMealScreen() {
+  document.getElementById('meal-date-display').textContent = formatDateJP2(mealDate);
+  document.getElementById('meal-list-title').textContent = mealTypeNames[mealType] + 'の記録';
+  renderMealList();
+  renderDayTotals();
+  renderTodayExercise();
+}
+
+function changeMealDate(delta) {
+  const d = new Date(mealDate);
+  d.setDate(d.getDate() + delta);
+  mealDate = formatDate(d);
+  renderMealScreen();
+}
+
+function setMealType(type, el) {
+  mealType = type;
+  document.querySelectorAll('.meal-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('meal-list-title').textContent = mealTypeNames[type] + 'の記録';
+  renderMealList();
+}
+
+function renderMealList() {
+  const meals = state.mealRecords.filter(m => m.date === mealDate && m.type === mealType);
+  const list = document.getElementById('meal-record-list');
+  const nr = document.getElementById('meal-no-records');
+  if (!meals.length) { list.innerHTML=''; nr.style.display=''; return; }
+  nr.style.display='none';
+  let html = '';
+  let mealKcal = 0, mealProtein = 0;
+  meals.forEach((meal, mi) => {
+    (meal.items||[]).forEach(it => {
+      mealKcal += it.kcal||0;
+      mealProtein += it.protein_g||0;
+      html += `<div class="meal-item">
+        <div class="meal-item-header">
+          <span class="meal-item-name">${escapeHtml(it.name)}</span>
+          <span class="text-muted">${it.kcal||0}kcal / ${(it.protein_g||0).toFixed(1)}g</span>
+        </div>
+      </div>`;
+    });
+    html += `<div style="text-align:right;padding:4px 0 8px;">
+      <button class="btn btn-danger btn-sm" onclick="deleteMealRecord('${meal.id}')">削除</button></div>`;
+  });
+  // Meal type subtotal
+  html += `<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--border);font-weight:500;font-size:13px;">
+    <span>${mealTypeNames[mealType]}の合計</span>
+    <span>${Math.round(mealKcal)}kcal / ${mealProtein.toFixed(1)}g</span>
+  </div>`;
+  list.innerHTML = html;
+}
+
+function getMealTypeLabel() {
+  return document.getElementById('meal-list-title').textContent;
+}
+
+function renderDayTotals() {
+  const totals = getDayTotals(mealDate);
+  const p = getCalcProfile();
+  const tdee = calcTDEE(p);
+  document.getElementById('meal-day-kcal').textContent = totals.kcal;
+  document.getElementById('meal-day-protein').textContent = totals.protein;
+  const remaining = Math.round(tdee) - totals.kcal;
+  document.getElementById('meal-day-remaining').textContent = remaining >= 0 ? remaining : remaining;
+  document.getElementById('meal-day-remaining').style.color = remaining < 0 ? '#C94040' : '';
+}
+
+function deleteMealRecord(id) {
+  if (!confirm('この記録を削除しますか？')) return;
+  state.mealRecords = state.mealRecords.filter(m => m.id !== id);
+  saveState(); renderMealScreen(); renderHome();
+}
+
+
+const DAY_KEYS = ['mon','tue','wed','thu','fri','sat','sun'];
+const DAY_NAMES = {'mon':'月','tue':'火','wed':'水','thu':'木','fri':'金','sat':'土','sun':'日'};
+
+async function analyzeExerciseVoice(target) {
+  const input = document.getElementById('ex-voice-input-' + target).value.trim();
+  if (!input) { alert('運動スケジュールを入力してください'); return; }
+
+  const btn = document.getElementById('ex-ai-btn-' + target);
+  btn.innerHTML = '<span class="loader"></span> 解析中...';
+  btn.disabled = true;
+
+  try {
+    const gender = state.profile.gender === 'female' ? '女性' : '男性';
+    const age = calcAge(state.profile.birthdate);
+    const weight = state.profile.weight;
+
+    // 既存スケジュールがあれば変更指示として扱う
+    const ws = state.weeklySchedule;
+    const hasExisting = ws && Object.values(ws).some(d => d.length > 0);
+    let existingInfo = '';
+    if (hasExisting) {
+      existingInfo = '\n\n【現在の登録内容】\n' + DAY_KEYS.map(day => {
+        const exs = ws[day] || [];
+        if (!exs.length) return `${DAY_NAMES[day]}曜: 休み`;
+        return `${DAY_NAMES[day]}曜: ${exs.map(e => `${e.name} ${e.minutes}分 強度${e.intensityPercent}% ${e.kcalPerSession}kcal`).join('、')}`;
+      }).join('\n');
+      existingInfo += '\n\n上記が現在の登録内容です。ユーザーの入力が「変更指示」（例：「ダンスの強度を50%にして」「水曜にヨガを追加」「木曜を休みにして」）の場合は、現在の内容をベースに変更を反映してください。新規スケジュールの場合はそのまま整理してください。';
+    }
+
+    const prompt = `あなたは運動・フィットネスの専門家です。
+以下のユーザー情報と入力内容から、曜日ごとの運動スケジュールを整理してください。
+
+【ユーザー】${gender} / ${age}歳 / 体重${weight}kg
+
+【ユーザーの入力】
+${input}${existingInfo}
+
+以下のJSON形式のみで返してください（他のテキストは不要）：
+{"weeklySchedule":{"mon":[{"name":"種目名","minutes":分数,"intensityPercent":強度補正,"kcalPerSession":推定消費カロリー}],"tue":[],"wed":[],"thu":[],"fri":[],"sat":[],"sun":[]}}
+
+注意：
+- 必ずmon〜sunの全7曜日のキーを含めてください（運動がない日は空配列[]）
+- 同じ曜日に複数の運動がある場合は配列に複数入れてください
+- intensityPercentは「強度70%」「ストレッチ含むから実質60%」などの言及があればその値、なければ現在の値を維持、言及も既存もなければ100にしてください
+- kcalPerSessionはintensityPercent適用前の、フルで動いた場合の推定消費カロリーを入れてください
+- 「火水」「月木」のように複数曜日をまとめて言っている場合はそれぞれの曜日に同じ内容を入れてください
+- カロリーは控えめに見積もってください。一般的な値より多めに返さないでください`;
+
+    const result = await callGemini(prompt);
+    let parsed;
+    try {
+      const jsonMatch = result.match(/\{[\s\S]*\}/);
+      parsed = JSON.parse(jsonMatch[0]);
+    } catch(e) {
+      alert('AIの応答を解析できませんでした。もう一度お試しください。');
+      return;
+    }
+
+    if (parsed.weeklySchedule) {
+      state.weeklySchedule = { mon:[], tue:[], wed:[], thu:[], fri:[], sat:[], sun:[] };
+      DAY_KEYS.forEach(day => {
+        if (parsed.weeklySchedule[day] && parsed.weeklySchedule[day].length) {
+          state.weeklySchedule[day] = parsed.weeklySchedule[day].map(ex => ({
+            id: 'ex' + Date.now() + Math.random().toString(36).slice(2, 6),
+            name: ex.name,
+            minutes: ex.minutes || 60,
+            intensityPercent: ex.intensityPercent || 100,
+            kcalPerSession: ex.kcalPerSession || Math.round((ex.minutes||60) * 5)
+          }));
+        }
+      });
+      saveState();
+      renderWeeklySchedule('exercise-list-setup');
+      renderWeeklySchedule('exercise-list-settings');
+      document.getElementById('ex-voice-input-' + target).value = '';
+    }
+  } catch(e) {
+    console.error(e);
+    alert(geminiErrorMsg(e));
+  } finally {
+    btn.textContent = 'AIで解析';
+    btn.disabled = false;
+  }
+}
+
+// ===== Meal Analysis via Gemini =====
+async function analyzeMeal() {
+  const input = document.getElementById('meal-input').value.trim();
+  if (!input) { alert('食事内容を入力してください'); return; }
+
+  const btn = document.getElementById('meal-analyze-btn');
+  btn.innerHTML = '<span class="loader"></span> 解析中...';
+  btn.disabled = true;
+
+  try {
+    // Build personal constants for system prompt
+    let constList = '';
+    if (state.personalConstants.length) {
+      constList = '\n以下のよく食べる食材を優先して使用してください：\n' +
+        state.personalConstants.map(c => `${c.name}: ${c.kcal}kcal, タンパク質${c.protein_g}g`).join('\n');
+    }
+    if (state.recipes.length) {
+      constList += '\n以下のマイレシピも参照してください：\n' +
+        state.recipes.map(r => `${r.name}（${r.ingredients}）: ${r.kcal}kcal, タンパク質${r.protein_g}g`).join('\n');
+    }
+
+    // Check existing records for this meal type
+    const existingMeals = state.mealRecords.filter(m => m.date === mealDate && m.type === mealType);
+    let existingInfo = '';
+    if (existingMeals.length) {
+      const allItems = [];
+      existingMeals.forEach(m => (m.items||[]).forEach(it => allItems.push(it)));
+      existingInfo = `\n\n【現在の${mealTypeNames[mealType]}の登録内容】\n` +
+        allItems.map(it => `${it.name}: ${it.kcal}kcal, タンパク質${it.protein_g}g`).join('\n') +
+        `\n\n上記が現在の登録内容です。ユーザーの入力が変更指示（「ラーメンをうどんに変更」「サラダを追加」「パンを削除」など）の場合は、現在の内容を修正した結果を返してください。新規入力の場合はそのまま計算してください。`;
+    }
+
+    const systemPrompt = `あなたは栄養管理アシスタントです。
+食事の内容からカロリーとタンパク質を計算してください。${constList}
+
+以下のJSON形式のみで返してください（他のテキストは不要）：
+{"items":[{"name":"食品名","kcal":数値,"protein_g":数値}],"total_kcal":数値,"total_protein_g":数値,"mode":"add"か"replace"}
+
+modeについて：
+- "add": 新しい食事の追加（既存の記録はそのまま残す）
+- "replace": 既存の記録を置き換える（変更・修正の指示があった場合）${existingInfo}`;
+
+    const result = await callGemini(systemPrompt + '\n\n食事内容：' + input);
+
+    let parsed;
+    try {
+      const jsonMatch = result.match(/\{[\s\S]*\}/);
+      parsed = JSON.parse(jsonMatch[0]);
+    } catch(e) {
+      alert('AIの応答を解析できませんでした。もう一度お試しください。');
+      return;
+    }
+
+    if (parsed.mode === 'replace' && existingMeals.length) {
+      // Replace: delete existing records for this meal type and date
+      state.mealRecords = state.mealRecords.filter(m => !(m.date === mealDate && m.type === mealType));
+    }
+
+    state.mealRecords.push({
+      id: 'meal_' + Date.now(),
+      date: mealDate,
+      type: mealType,
+      input: input,
+      items: parsed.items || [],
+      total_kcal: parsed.total_kcal || 0,
+      total_protein_g: parsed.total_protein_g || 0,
+      timestamp: new Date().toISOString()
+    });
+    saveState();
+
+    document.getElementById('meal-input').value = '';
+    renderMealScreen();
+    renderHome();
+  } catch(e) {
+    console.error(e);
+    alert(geminiErrorMsg(e));
+  } finally {
+    btn.textContent = 'AIで栄養計算';
+    btn.disabled = false;
+  }
+}
+
+// ===== Today Exercise Adjustment =====
+function getDayKeyForDate(dateStr) {
+  const jsDay = new Date(dateStr).getDay(); // 0=Sun
+  return ['sun','mon','tue','wed','thu','fri','sat'][jsDay];
+}
+
+function renderTodayExercise() {
+  const card = document.getElementById('today-exercise-card');
+  const ws = state.weeklySchedule;
+  const hasSchedule = ws && Object.values(ws).some(d => d.length > 0);
+  if (state.activityMode !== 'detailed' || !hasSchedule) { card.style.display='none'; return; }
+  card.style.display='';
+
+  const todayKey = getDayKeyForDate(formatDate(new Date()));
+  const todayExercises = ws[todayKey] || [];
+  const overrides = getTodayExerciseOverrides();
+  const list = document.getElementById('today-exercise-list');
+  const isToday = mealDate === formatDate(new Date());
+  document.getElementById('today-exercise-title').textContent = isToday ? '今日の運動' : DAY_NAMES[todayKey] + '曜日の運動';
+
+  if (!todayExercises.length) {
+    list.innerHTML = `<div class="text-muted" style="text-align:center;padding:8px;">${DAY_NAMES[todayKey]}曜日は休みです</div>`;
+    document.getElementById('today-ex-kcal').textContent = '休み';
+    return;
+  }
+
+  let totalKcal = 0;
+  list.innerHTML = todayExercises.map(ex => {
+    const active = overrides[ex.id] !== false;
+    const kcal = Math.round((ex.kcalPerSession||0) * (ex.intensityPercent||100) / 100);
+    if (active) totalKcal += kcal;
+    return `<div class="today-ex-item">
+      <div>
+        <div style="font-weight:500;font-size:13px;">${escapeHtml(ex.name)}</div>
+        <div class="text-muted" style="font-size:12px;">${ex.minutes}分 / ${kcal}kcal</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" ${active?'checked':''} onchange="toggleTodayExercise('${ex.id}',this.checked)">
+        <div class="toggle-track"></div>
+        <div class="toggle-knob"></div>
+      </label>
+    </div>`;
+  }).join('');
+  document.getElementById('today-ex-kcal').textContent = Math.round(totalKcal) + ' kcal';
+}
+
+function toggleTodayExercise(id, active) {
+  const overrides = getTodayExerciseOverrides();
+  if (active) delete overrides[id];
+  else overrides[id] = false;
+  saveTodayExerciseOverrides(overrides);
+  renderTodayExercise();
+}
+
+// ===== Exercise =====
+function renderExerciseList(containerId) { renderWeeklySchedule(containerId); }
+
+function renderWeeklySchedule(containerId) {
+  const c = document.getElementById(containerId);
+  if (!c) return;
+  const ws = state.weeklySchedule;
+  const hasAny = ws && Object.values(ws).some(d => d.length > 0);
+  if (!hasAny) { c.innerHTML='<div class="text-muted" style="text-align:center;padding:12px;">スケジュールが未登録です</div>'; return; }
+  let html = '';
+  DAY_KEYS.forEach(day => {
+    const exs = ws[day] || [];
+    html += `<div style="padding:6px 0;${exs.length?'':'opacity:0.4;'}">`;
+    html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">`;
+    html += `<span style="display:inline-block;width:24px;height:24px;border-radius:50%;background:${exs.length?'var(--accent)':'var(--border)'};color:#fff;text-align:center;line-height:24px;font-size:12px;font-weight:500;">${DAY_NAMES[day]}</span>`;
+    if (!exs.length) {
+      html += `<span class="text-muted" style="font-size:12px;">休み</span>`;
+    }
+    html += `</div>`;
+    exs.forEach(ex => {
+      const kcal = Math.round((ex.kcalPerSession||0) * (ex.intensityPercent||100) / 100);
+      html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0 2px 32px;">`;
+      html += `<div><span style="font-size:13px;font-weight:500;">${escapeHtml(ex.name)}</span>`;
+      html += `<span class="text-muted" style="font-size:11px;margin-left:6px;">${ex.minutes}分 / 強度${ex.intensityPercent||100}% / ${kcal}kcal</span></div>`;
+      html += `<div style="display:flex;gap:4px;">`;
+      html += `<button class="icon-btn" onclick="editScheduleExercise('${day}','${ex.id}')" style="width:24px;height:24px;font-size:12px;">&#9998;</button>`;
+      html += `<button class="icon-btn" onclick="deleteScheduleExercise('${day}','${ex.id}')" style="width:24px;height:24px;font-size:12px;">&times;</button>`;
+      html += `</div>`;
+      html += `</div>`;
+    });
+    html += `</div>`;
+  });
+  c.innerHTML = html;
+}
+
+function editScheduleExercise(day, id) {
+  const exs = state.weeklySchedule[day] || [];
+  const ex = exs.find(e => e.id === id);
+  if (!ex) return;
+  // 運動設定モーダルが開いていたら閉じる
+  closeModal('modal-exercise-settings');
+  // モーダルに値をセット
+  selectedExDays = [day];
+  document.getElementById('ex-name').value = ex.name;
+  document.getElementById('ex-minutes').value = ex.minutes;
+  document.getElementById('ex-intensity').value = ex.intensityPercent || 100;
+  document.getElementById('ex-edit-id').value = id;
+  document.getElementById('ex-edit-day').value = day;
+  document.getElementById('exercise-modal-title').textContent = '種目を編集';
+  document.getElementById('ex-save-btn').textContent = '保存';
+  // 曜日ボタンの状態をセット
+  document.querySelectorAll('#ex-day-selector .period-btn').forEach(b => {
+    const d = b.textContent === '月'?'mon':b.textContent === '火'?'tue':b.textContent === '水'?'wed':b.textContent === '木'?'thu':b.textContent === '金'?'fri':b.textContent === '土'?'sat':'sun';
+    b.classList.toggle('active', d === day);
+  });
+  openModal('modal-exercise');
+}
+
+function deleteScheduleExercise(day, id) {
+  const ex = (state.weeklySchedule[day]||[]).find(e => e.id === id);
+  if (!ex || !confirm(`「${ex.name}」を${DAY_NAMES[day]}曜から削除しますか？`)) return;
+  state.weeklySchedule[day] = (state.weeklySchedule[day]||[]).filter(e => e.id !== id);
+  saveState();
+  renderWeeklySchedule('exercise-list-setup');
+  renderWeeklySchedule('exercise-list-settings');
+}
+let selectedExDays = [];
+
+function toggleExDay(btn, day) {
+  const idx = selectedExDays.indexOf(day);
+  if (idx >= 0) { selectedExDays.splice(idx, 1); btn.classList.remove('active'); }
+  else { selectedExDays.push(day); btn.classList.add('active'); }
+}
+
+function openExerciseModal() {
+  selectedExDays = [];
+  document.getElementById('ex-name').value='';
+  document.getElementById('ex-minutes').value='';
+  document.getElementById('ex-intensity').value='100';
+  document.getElementById('ex-edit-id').value='';
+  document.getElementById('ex-edit-day').value='';
+  document.getElementById('exercise-modal-title').textContent='種目を追加';
+  document.getElementById('ex-save-btn').textContent='追加';
+  document.querySelectorAll('#ex-day-selector .period-btn').forEach(b => b.classList.remove('active'));
+  // 運動設定モーダルが開いていたら一旦閉じる
+  closeModal('modal-exercise-settings');
+  openModal('modal-exercise');
+}
+async function saveExercise(){
+  const name=document.getElementById('ex-name').value.trim();
+  const minutes=parseInt(document.getElementById('ex-minutes').value);
+  const intensity=parseInt(document.getElementById('ex-intensity').value)||100;
+  const editId=document.getElementById('ex-edit-id').value;
+  const editDay=document.getElementById('ex-edit-day').value;
+  if(!name||!minutes){alert('種目名と時間を入力してください');return;}
+  if(!selectedExDays.length){alert('曜日を1つ以上選択してください');return;}
+
+  const btn=document.getElementById('ex-save-btn');
+  btn.innerHTML='<span class="loader"></span> 計算中...';btn.disabled=true;
+  let kcal=0;
+  try{kcal=await estimateExerciseCalories(name,minutes);}catch(e){console.error(e);kcal=Math.round(minutes*5);}
+  btn.textContent=editId?'保存':'追加';btn.disabled=false;
+
+  if(!state.weeklySchedule) state.weeklySchedule={mon:[],tue:[],wed:[],thu:[],fri:[],sat:[],sun:[]};
+
+  // 編集モード
+  if(editId && editDay) {
+    const exs = state.weeklySchedule[editDay] || [];
+    const idx = exs.findIndex(e => e.id === editId);
+    if(idx >= 0) {
+      exs[idx] = { ...exs[idx], name, minutes, intensityPercent: intensity, kcalPerSession: kcal };
+    }
+  } else {
+    // 新規追加
+    selectedExDays.forEach(day => {
+      state.weeklySchedule[day].push({
+        id: 'ex'+Date.now()+Math.random().toString(36).slice(2,6),
+        name, minutes, intensityPercent: intensity, kcalPerSession: kcal
+      });
+    });
+  }
+
+  saveState();closeModal('modal-exercise');
+  renderWeeklySchedule('exercise-list-setup');renderWeeklySchedule('exercise-list-settings');
+  if(currentTab === 'mymenu') renderMyMenu();
+}
+async function estimateExerciseCalories(name,min){
+  const g=state.profile.gender==='female'?'女性':'男性',a=calcAge(state.profile.birthdate),w=state.profile.weight;
+  const prompt=`${g}${a}歳 体重${w}kgの人が${name}を${min}分行った場合の消費カロリーをkcalで数値のみ返してください。`;
+  const res=await callGemini(prompt);
+  const num=parseFloat(res.replace(/[^0-9.]/g,''));
+  if(isNaN(num))throw new Error('Invalid response');
+  return Math.round(num);
+}
+
+// ===== Gemini API =====
+async function callGemini(prompt, retries){
+  retries = retries || 0;
+  const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${state.apiKey}`;
+  let res;
+  try {
+    res = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})});
+  } catch(e) {
+    throw new Error('network_error');
+  }
+  if(!res.ok) {
+    const errData = await res.json().catch(()=>({}));
+    const errMsg = errData.error?.message || '';
+    if(res.status === 429) throw new Error('rate_limit:' + errMsg);
+    if(res.status === 400) throw new Error('bad_request:' + errMsg);
+    if(res.status === 403) throw new Error('forbidden:' + errMsg);
+    throw new Error('api_error:' + res.status + ':' + errMsg);
+  }
+  const data=await res.json();
+  if(!data.candidates || !data.candidates[0]) {
+    const reason = data.promptFeedback?.blockReason || '不明';
+    throw new Error('blocked:' + reason);
+  }
+  return data.candidates[0].content.parts[0].text;
+}
+
+function geminiErrorMsg(e) {
+  const msg = e.message || '';
+  if (msg === 'network_error') return 'ネットワークに接続できません。電波状況を確認してください。';
+  if (msg.startsWith('rate_limit:')) return 'APIの利用制限です。しばらく待ってからお試しください。\n\n詳細: ' + msg.slice(11);
+  if (msg.startsWith('forbidden:')) return 'APIキーが無効です。設定画面でAPIキーを確認してください。\n\n詳細: ' + msg.slice(10);
+  if (msg.startsWith('blocked:')) return 'AIが内容を処理できませんでした（理由: ' + msg.slice(8) + '）。入力内容を変えてお試しください。';
+  if (msg.startsWith('bad_request:')) return 'リクエストエラー: ' + msg.slice(12);
+  if (msg.startsWith('api_error:')) return 'APIエラーが発生しました。しばらく待ってからお試しください。\n\n詳細: ' + msg.slice(10);
+  return 'エラーが発生しました: ' + msg;
+}
+
+// ===== Settings Screen =====
+function renderSettings(){
+  document.getElementById('settings-api-key').value=state.apiKey;
+}
+function openProfileEdit(){
+  const p=state.profile;
+  document.getElementById('edit-name').value=p.name;document.getElementById('edit-gender').value=p.gender;
+  document.getElementById('edit-birthdate').value=p.birthdate;document.getElementById('edit-height').value=p.height;
+  document.getElementById('edit-weight').value=p.weight;document.getElementById('edit-bodyfat').value=p.bodyFat||'';
+  document.getElementById('edit-muscle').value=p.muscleMass||'';
+  openModal('modal-profile');
+}
+function saveProfile(){
+  const name=document.getElementById('edit-name').value.trim(),gender=document.getElementById('edit-gender').value;
+  const birthdate=document.getElementById('edit-birthdate').value,height=parseFloat(document.getElementById('edit-height').value);
+  const weight=parseFloat(document.getElementById('edit-weight').value);
+  if(!name||!gender||!birthdate||!height||!weight){alert('必須項目をすべて入力してください');return;}
+  state.profile={name,gender,birthdate,height,weight,bodyFat:parseFloat(document.getElementById('edit-bodyfat').value)||null,muscleMass:parseFloat(document.getElementById('edit-muscle').value)||null};
+  saveState();closeModal('modal-profile');renderMyMenu();renderHome();
+}
+function saveApiKey(){state.apiKey=document.getElementById('settings-api-key').value.trim();saveState();alert('APIキーを保存しました');}
+function switchActivityMode(mode){
+  state.activityMode = mode;
+  saveState();
+  renderMyMenu();
+  renderHome();
+}
+function saveActivityLevel(){
+  state.activityLevel = parseFloat(document.getElementById('settings-activity-level').value);
+  saveState();
+  renderHome();
+}
+// Legacy compatibility
+function openExerciseSettings(){ renderMyMenu(); }
+function saveExerciseSettings(){ }
+
+// ===== My Menu Screen =====
+function renderMyMenu(){
+  const p=state.profile,age=p.birthdate?calcAge(p.birthdate):'--';
+  document.getElementById('settings-profile-info').innerHTML=`<div style="font-size:13px;line-height:2;">
+    ${escapeHtml(p.name)} / ${p.gender==='male'?'男性':'女性'} / ${age}歳<br>
+    身長 ${p.height}cm / 体重 ${p.weight}kg${p.bodyFat?` / 体脂肪率 ${p.bodyFat}%`:''}${p.muscleMass?` / 骨格筋率 ${p.muscleMass}%`:''}</div>`;
+  // 運動設定のモード表示
+  const isSimple = state.activityMode === 'simple';
+  document.getElementById('settings-toggle-simple').classList.toggle('active', isSimple);
+  document.getElementById('settings-toggle-detailed').classList.toggle('active', !isSimple);
+  document.getElementById('settings-simple-area').style.display = isSimple ? '' : 'none';
+  document.getElementById('settings-detailed-area').style.display = isSimple ? 'none' : '';
+  document.getElementById('settings-activity-level').value = String(state.activityLevel);
+  renderWeeklySchedule('exercise-list-settings');
+  renderConstantList();
+  renderRecipeList();
+}
+
+// ===== Personal Constants =====
+function renderConstantList(){
+  const list=document.getElementById('constant-list');
+  if(!state.personalConstants.length){list.innerHTML='<div class="text-muted" style="text-align:center;padding:8px;">未登録</div>';return;}
+  list.innerHTML=state.personalConstants.map((c,i)=>`
+    <div class="const-item"><div>${escapeHtml(c.name)}<br><span class="text-muted">${c.kcal}kcal / ${c.protein_g}g</span></div>
+    <div class="exercise-actions"><button class="icon-btn" onclick="editConstant(${i})">&#9998;</button><button class="icon-btn" onclick="deleteConstant(${i})">&times;</button></div></div>`).join('');
+}
+function openConstantModal(idx){
+  document.getElementById('const-name').value='';document.getElementById('const-kcal').value='';
+  document.getElementById('const-protein').value='';document.getElementById('const-edit-idx').value='-1';
+  document.getElementById('constant-modal-title').textContent='よく食べる食材を追加';
+  if(idx!=null&&state.personalConstants[idx]){
+    const c=state.personalConstants[idx];
+    document.getElementById('const-name').value=c.name;document.getElementById('const-kcal').value=c.kcal;
+    document.getElementById('const-protein').value=c.protein_g;document.getElementById('const-edit-idx').value=idx;
+    document.getElementById('constant-modal-title').textContent='よく食べる食材を編集';
+  }
+  openModal('modal-constant');
+}
+function editConstant(i){openConstantModal(i);}
+function deleteConstant(i){
+  const c=state.personalConstants[i];
+  if(!c||!confirm(`「${c.name}」を削除しますか？`))return;
+  state.personalConstants.splice(i,1);saveState();renderConstantList();
+}
+
+async function analyzeConstantVoice() {
+  const input = document.getElementById('const-voice-input').value.trim();
+  if (!input) { alert('食材の内容を入力してください'); return; }
+
+  const btn = document.getElementById('const-ai-btn');
+  btn.innerHTML = '<span class="loader"></span> 解析中...';
+  btn.disabled = true;
+
+  try {
+    const prompt = `あなたは栄養管理の専門家です。
+以下の食材リストを解析して、それぞれのカロリーとタンパク質を計算してください。
+
+【入力】
+${input}
+
+以下のJSON形式のみで返してください（他のテキストは不要）：
+{"items":[{"name":"食材名（分量込み）","kcal":カロリー数値,"protein_g":タンパク質g数値}]}
+
+注意：
+- nameには分量を含めてください（例：「納豆1パック」「ゆで卵1個」「プロテインドリンク1杯」）
+- ユーザーがカロリーやタンパク質を指定している場合はその値を使ってください
+- 指定がない場合は一般的な栄養価を推定してください
+- 複数の食材がある場合はすべて配列に含めてください`;
+
+    const result = await callGemini(prompt);
+    let parsed;
+    try {
+      const jsonMatch = result.match(/\{[\s\S]*\}/);
+      parsed = JSON.parse(jsonMatch[0]);
+    } catch(e) {
+      alert('AIの応答を解析できませんでした。もう一度お試しください。');
+      return;
+    }
+
+    if (parsed.items && parsed.items.length) {
+      parsed.items.forEach(item => {
+        state.personalConstants.push({
+          name: item.name,
+          kcal: Math.round(item.kcal),
+          protein_g: Math.round(item.protein_g * 10) / 10
+        });
+      });
+      saveState();
+      renderConstantList();
+      document.getElementById('const-voice-input').value = '';
+      alert(parsed.items.length + '件の食材を登録しました');
+    }
+  } catch(e) {
+    console.error(e);
+    alert(geminiErrorMsg(e));
+  } finally {
+    btn.textContent = 'AIで解析して登録';
+    btn.disabled = false;
+  }
+}
+
+function saveConstant(){
+  const name=document.getElementById('const-name').value.trim();
+  const kcal=parseFloat(document.getElementById('const-kcal').value);
+  const protein=parseFloat(document.getElementById('const-protein').value);
+  if(!name||isNaN(kcal)||isNaN(protein)){alert('すべて入力してください');return;}
+  const idx=parseInt(document.getElementById('const-edit-idx').value);
+  if(idx>=0)state.personalConstants[idx]={name,kcal,protein_g:protein};
+  else state.personalConstants.push({name,kcal,protein_g:protein});
+  saveState();closeModal('modal-constant');renderConstantList();
+}
+
+// ===== My Recipes =====
+function renderRecipeList(){
+  const list=document.getElementById('recipe-list');
+  if(!state.recipes.length){list.innerHTML='<div class="text-muted" style="text-align:center;padding:8px;">未登録</div>';return;}
+  list.innerHTML=state.recipes.map((r,i)=>`
+    <div class="recipe-item"><div>${escapeHtml(r.name)}${r.servingNote?'<br><span class="text-muted" style="font-size:11px;">'+escapeHtml(r.servingNote)+'</span>':''}<br><span class="text-muted">${r.kcal}kcal / ${r.protein_g}g（1食分）</span></div>
+    <div class="exercise-actions"><button class="icon-btn" onclick="editRecipe(${i})">&#9998;</button><button class="icon-btn" onclick="deleteRecipe(${i})">&times;</button></div></div>`).join('');
+}
+function openRecipeModal(idx){
+  document.getElementById('recipe-name').value='';document.getElementById('recipe-ingredients').value='';
+  document.getElementById('recipe-serving').value='';
+  document.getElementById('recipe-kcal').value='';document.getElementById('recipe-protein').value='';
+  document.getElementById('recipe-edit-idx').value='-1';
+  document.getElementById('recipe-modal-title').textContent='マイレシピを追加';
+  if(idx!=null&&state.recipes[idx]){
+    const r=state.recipes[idx];
+    document.getElementById('recipe-name').value=r.name;document.getElementById('recipe-ingredients').value=r.ingredients||'';
+    document.getElementById('recipe-serving').value=r.servingNote||'';
+    document.getElementById('recipe-kcal').value=r.kcal;document.getElementById('recipe-protein').value=r.protein_g;
+    document.getElementById('recipe-edit-idx').value=idx;
+    document.getElementById('recipe-modal-title').textContent='マイレシピを編集';
+  }
+  openModal('modal-recipe');
+}
+function editRecipe(i){openRecipeModal(i);}
+function deleteRecipe(i){
+  const r=state.recipes[i];
+  if(!r||!confirm(`「${r.name}」を削除しますか？`))return;
+  state.recipes.splice(i,1);saveState();renderRecipeList();
+}
+function saveRecipe(){
+  const name=document.getElementById('recipe-name').value.trim();
+  const ingredients=document.getElementById('recipe-ingredients').value.trim();
+  const servingNote=document.getElementById('recipe-serving').value.trim();
+  const kcal=parseFloat(document.getElementById('recipe-kcal').value);
+  const protein=parseFloat(document.getElementById('recipe-protein').value);
+  if(!name||isNaN(kcal)||isNaN(protein)){alert('レシピ名・カロリー・タンパク質を入力してください');return;}
+  const idx=parseInt(document.getElementById('recipe-edit-idx').value);
+  if(idx>=0)state.recipes[idx]={name,ingredients,servingNote,kcal,protein_g:protein};
+  else state.recipes.push({name,ingredients,servingNote,kcal,protein_g:protein});
+  saveState();closeModal('modal-recipe');renderRecipeList();
+}
+
+
+async function analyzeRecipeVoice() {
+  const input = document.getElementById('recipe-voice-input').value.trim();
+  if (!input) { alert('レシピの内容を入力してください'); return; }
+
+  const btn = document.getElementById('recipe-ai-btn');
+  btn.innerHTML = '<span class="loader"></span> 解析中...';
+  btn.disabled = true;
+
+  try {
+    const prompt = `あなたは栄養管理の専門家です。
+以下のレシピの説明を解析してください。
+ユーザーは「まとめて作って何回かに分けて食べる」というパターンが多いです。
+その場合は1食分のカロリーとタンパク質を計算してください。
+
+【入力】
+${input}
+
+以下のJSON形式のみで返してください（他のテキストは不要）：
+{"recipes":[{"name":"レシピ名（短く）","ingredients":"材料と分量（必ずグラム数を含める）","totalKcal":全体のカロリー,"totalProtein":全体のタンパク質g,"servings":何食分か,"perServingKcal":1食分のカロリー,"perServingProtein":1食分のタンパク質g,"servingNote":"例: 全体の1/3量"}]}
+
+注意：
+- ingredientsには必ず各材料のグラム数や個数を含めてください（例：「鶏むね肉300g、ブロッコリー200g、ゆで卵2個」）
+- ユーザーがグラムを指定していない材料は一般的な量を推定してグラム数を補ってください
+- 1つの説明に複数レシピが含まれる場合は配列で返してください
+- 「70gずつ」「1/3ずつ」「3回に分けて」などの表現から食数を判断してください
+- servingNoteは「全体○gのうち70g」や「全体の1/3量」など分量の説明を入れてください`;
+
+    const result = await callGemini(prompt);
+    let parsed;
+    try {
+      const jsonMatch = result.match(/\{[\s\S]*\}/);
+      parsed = JSON.parse(jsonMatch[0]);
+    } catch(e) {
+      alert('AIの応答を解析できませんでした。もう一度お試しください。');
+      return;
+    }
+
+    if (parsed.recipes && parsed.recipes.length) {
+      parsed.recipes.forEach(r => {
+        state.recipes.push({
+          name: r.name,
+          ingredients: r.ingredients || '',
+          kcal: Math.round(r.perServingKcal || r.totalKcal),
+          protein_g: Math.round((r.perServingProtein || r.totalProtein) * 10) / 10,
+          servingNote: r.servingNote || ''
+        });
+      });
+      saveState();
+      renderRecipeList();
+      document.getElementById('recipe-voice-input').value = '';
+      alert(parsed.recipes.length + '件のレシピを登録しました');
+    }
+  } catch(e) {
+    console.error(e);
+    alert(geminiErrorMsg(e));
+  } finally {
+    btn.textContent = 'AIで解析して登録';
+    btn.disabled = false;
+  }
+}
+
+// ===== Build user context for AI =====
+function buildUserContext(days) {
+  days = days || 30;
+  const now = new Date();
+  const ago = new Date(now);
+  ago.setDate(ago.getDate() - days);
+  const startStr = formatDate(ago);
+  const endStr = formatDate(now);
+  const p = getCalcProfile();
+  const tdee = calcTDEE(p);
+  const protTarget = calcProteinTarget(p);
+
+  const weightRecs = state.bodyRecords.filter(r => r.date >= startStr && r.date <= endStr).sort((a,b) => a.date.localeCompare(b.date));
+  const weightStr = weightRecs.length ? weightRecs.map(r => `${r.date}: ${r.weight}kg${r.bodyFat?' 体脂肪'+r.bodyFat+'%':''}${r.muscleMass?' 骨格筋'+r.muscleMass+'%':''}`).join('\n') : '記録なし';
+
+  const mealRecs = state.mealRecords.filter(m => m.date >= startStr && m.date <= endStr);
+  const dailyMeals = {};
+  mealRecs.forEach(m => {
+    if (!dailyMeals[m.date]) dailyMeals[m.date] = {kcal:0, protein:0, items:[]};
+    (m.items||[]).forEach(it => { dailyMeals[m.date].kcal += (it.kcal||0); dailyMeals[m.date].protein += (it.protein_g||0); dailyMeals[m.date].items.push(it.name); });
+  });
+  const mealStr = Object.keys(dailyMeals).sort().map(d => `${d}: ${Math.round(dailyMeals[d].kcal)}kcal, タンパク質${Math.round(dailyMeals[d].protein)}g（${dailyMeals[d].items.join('、')}）`).join('\n') || '記録なし';
+
+  let exStr = '活動レベル: ' + state.activityLevel;
+  if (state.activityMode === 'detailed') {
+    const ws = state.weeklySchedule;
+    if (ws && Object.values(ws).some(d => d.length > 0)) {
+      exStr = DAY_KEYS.map(day => {
+        const exs = ws[day] || [];
+        if (!exs.length) return `${DAY_NAMES[day]}曜: 休み`;
+        return `${DAY_NAMES[day]}曜: ${exs.map(e => `${e.name} ${e.minutes}分`).join('、')}`;
+      }).join('\n');
+    }
+  }
+
+  return `【プロフィール】
+${state.profile.name} / ${state.profile.gender==='female'?'女性':'男性'} / ${calcAge(state.profile.birthdate)}歳 / 身長${state.profile.height}cm
+目標カロリー: ${Math.round(tdee)}kcal / 目標タンパク質: ${Math.round(protTarget)}g
+
+【過去${days}日の体重推移】
+${weightStr}
+
+【過去${days}日の食事記録】
+${mealStr}
+
+【運動】
+${exStr}
+
+【よく食べる食材】
+${state.personalConstants.length ? state.personalConstants.map(c => `${c.name}: ${c.kcal}kcal / タンパク質${c.protein_g}g`).join('\n') : '未登録'}
+
+【マイレシピ】
+${state.recipes.length ? state.recipes.map(r => `${r.name}（${r.ingredients || ''}）: ${r.kcal}kcal / タンパク質${r.protein_g}g${r.servingNote ? '（'+r.servingNote+'）' : ''}`).join('\n') : '未登録'}`;
+}
+
+// ===== Analysis =====
+async function runAnalysis(days) {
+  const statusDiv = document.getElementById('analysis-btn-status');
+  statusDiv.innerHTML = '<div style="text-align:center;padding:8px;"><span class="loader"></span> 過去' + days + '日分を分析中...</div>';
+  startPakupaku();
+  setBubbleText('分析中です...少々お待ちくださいね。');
+
+  try {
+    const context = buildUserContext(days);
+
+    // Count actual data
+    const now = new Date();
+    const ago = new Date(now); ago.setDate(ago.getDate() - days);
+    const startStr = formatDate(ago);
+    const mealDays = new Set(state.mealRecords.filter(m => m.date >= startStr).map(m => m.date)).size;
+    const weightDays = state.bodyRecords.filter(r => r.date >= startStr).length;
+
+    let dataNote = '';
+    if (mealDays === 0 && weightDays === 0) {
+      statusDiv.innerHTML = '';
+      resultDiv.innerHTML = '<div class="text-warn">過去' + days + '日間のデータがありません。食事や体重を記録してから分析してください。</div>';
+      return;
+    }
+    if (mealDays < days * 0.5) {
+      dataNote = `\n注意：食事記録は${mealDays}日分のみです。あるデータだけで分析してください。データが少ない場合はその旨も伝えてください。`;
+    }
+
+    const prompt = `あなたは栄養管理と運動の専門家です。以下のユーザーの過去${days}日間の記録を分析してください。${dataNote}
+
+${context}
+
+以下の観点で日本語でアドバイスしてください：
+1. 体重・体脂肪の変化について
+2. 食事バランスの傾向と改善点
+3. 運動と食事の組み合わせについて
+4. 今後に向けてのアドバイス
+
+300文字以内で簡潔にまとめてください。`;
+
+    const result = await callGemini(prompt);
+    saveAiHistoryItem('analysis', '過去' + days + '日の分析', result);
+    setBubbleText(result);
+    renderNutriHistory();
+  } catch(e) {
+    console.error(e);
+    setBubbleText('エラーが出てしまいました...もう少し待ってからお試しください。');
+    alert(geminiErrorMsg(e));
+  } finally {
+    stopPakupaku();
+    statusDiv.innerHTML = '';
+  }
+}
+
+function formatAnalysis(text) {
+  return escapeHtml(text).replace(/(\d+)\.\s/g, '<h3>$&</h3>').replace(/\n/g, '<br>');
+}
+
+// ===== AI Chat =====
+let chatConversation = []; // session conversation history
+
+async function sendChat() {
+  const input = document.getElementById('chat-input').value.trim();
+  if (!input) { alert('相談内容を入力してください'); return; }
+
+  const btn = document.getElementById('chat-send-btn');
+  btn.innerHTML = '<span class="loader"></span> 考え中...';
+  btn.disabled = true;
+  startPakupaku();
+  setBubbleText('考え中です...少々お待ちくださいね。');
+
+  try {
+    // 軽いコンテキスト（プロフィールと目標値のみ）
+    const p = getCalcProfile();
+    const tdee = calcTDEE(p);
+    const protTarget = calcProteinTarget(p);
+    const miniContext = `【ユーザー】${state.profile.name} / ${state.profile.gender==='female'?'女性':'男性'} / ${calcAge(state.profile.birthdate)}歳 / 身長${state.profile.height}cm / 体重${p.weight}kg${p.bodyFat?' / 体脂肪率'+p.bodyFat+'%':''}
+目標カロリー: ${Math.round(tdee)}kcal / 目標タンパク質: ${Math.round(protTarget)}g`;
+
+    // Build conversation history (last 5 exchanges max)
+    let convHistory = '';
+    if (chatConversation.length > 0) {
+      const recent = chatConversation.slice(-5);
+      convHistory = '\n\n【これまでの会話】\n' + recent.map(c =>
+        `ユーザー: ${c.q}\n栄養士: ${c.a}`
+      ).join('\n\n');
+    }
+
+    const prompt = `あなたは管理栄養士・ダイエットサポーターとして回答してください。
+具体的かつ実践的なアドバイスをしてください。
+
+回答のルール：
+- 具体的な食品名・量・栄養素の数値を出すこと
+- ユーザーの目標カロリー・タンパク質に合わせた提案をすること
+- 親しみやすく、でも専門家としての信頼感のある口調で話すこと
+- 300文字以内で簡潔にまとめること
+- これまでの会話の流れを踏まえて回答すること
+- 自己紹介は不要。いきなり本題に入ること
+
+${miniContext}${convHistory}
+
+【相談内容】
+${input}
+
+日本語で300文字以内で答えてください。`;
+
+    const result = await callGemini(prompt);
+    chatConversation.push({ q: input, a: result });
+    saveAiHistoryItem('chat', input, result);
+    setBubbleText(result);
+    document.getElementById('chat-input').value = '';
+    document.getElementById('chat-input').placeholder = '続けて質問できます...';
+    renderNutriHistory();
+  } catch(e) {
+    console.error(e);
+    setBubbleText('エラーが出てしまいました...もう少し待ってからお試しください。');
+    alert(geminiErrorMsg(e));
+  } finally {
+    stopPakupaku();
+    btn.textContent = '相談する';
+    btn.disabled = false;
+  }
+}
+
+// ===== Nutritionist Screen =====
+let pakuTimer = null;
+
+function renderNutriScreen() {
+  stopPakupaku();
+  chatConversation = [];
+  document.getElementById('nutri-bubble-text').innerHTML = 'こんにちは！何でも相談してくださいね。食事アドバイスや栄養の悩み、お気軽にどうぞ。';
+  document.getElementById('chat-input').placeholder = '例：最近タンパク質が足りてない気がする、コンビニで買えるおすすめは？';
+  renderNutriHistory();
+}
+
+function startPakupaku() {
+  stopPakupaku();
+  // 栄養士タブが表示されていなければ表示する
+  if (currentTab !== 'nutri') switchTab('nutri');
+  const img = document.getElementById('nutri-img');
+  if (!img) return;
+  let open = false;
+  pakuTimer = setInterval(() => {
+    open = !open;
+    img.src = open ? 'nutritionist_open.png' : 'nutritionist_close.png';
+  }, 200);
+}
+
+function stopPakupaku() {
+  if (pakuTimer) { clearInterval(pakuTimer); pakuTimer = null; }
+  const img = document.getElementById('nutri-img');
+  if (img) img.src = 'nutritionist_close.png';
+}
+
+function setBubbleText(text) {
+  const bubble = document.getElementById('nutri-bubble');
+  if (!bubble) return;
+  bubble.style.animation = 'none';
+  bubble.offsetHeight;
+  bubble.style.animation = 'bubbleFadeIn 0.3s ease';
+  document.getElementById('nutri-bubble-text').innerHTML = formatAnalysis(text)
+    + '<div style="text-align:right;margin-top:8px;"><button class="btn btn-secondary btn-sm" onclick="closeBubble()">とじる</button></div>';
+  bubble.style.display = '';
+}
+
+function closeBubble() {
+  const bubble = document.getElementById('nutri-bubble');
+  if (bubble) {
+    document.getElementById('nutri-bubble-text').innerHTML = 'こんにちは！何でも相談してくださいね。';
+  }
+}
+
+function renderNutriHistory() {
+  const el = document.getElementById('nutri-history');
+  if (!el) return;
+  const items = getAiHistory();
+  if (!items.length) { el.innerHTML = '<div class="text-muted" style="text-align:center;padding:8px;">まだ履歴がありません</div>'; return; }
+  el.innerHTML = items.map((h, i) => `<div class="history-item" onclick="toggleHistoryAnswer('nutri-hist-${i}')">
+    <div class="history-date">${formatDateJP3(h.date)} - ${h.type === 'analysis' ? '食事分析' : '相談'}</div>
+    <div class="history-question">${escapeHtml(h.question).slice(0,50)}${h.question.length>50?'...':''}</div>
+    <div class="history-answer" id="nutri-hist-${i}">${formatAnalysis(h.answer)}</div>
+  </div>`).join('');
+}
+
+// ===== Accordion =====
+function toggleAccordion(id) {
+  const body = document.getElementById(id);
+  const arrow = document.getElementById(id + '-arrow');
+  body.classList.toggle('open');
+  arrow.classList.toggle('open');
+}
+
+// ===== AI History =====
+function getAiHistory() {
+  try { return JSON.parse(localStorage.getItem('aiHistory')) || []; } catch(e) { return []; }
+}
+function saveAiHistoryItem(type, question, answer) {
+  const history = getAiHistory();
+  history.unshift({ type, question, answer, date: new Date().toISOString() });
+  if (history.length > 20) history.length = 20; // keep max 20
+  localStorage.setItem('aiHistory', JSON.stringify(history));
+}
+function renderChatHistory() {
+  const el = document.getElementById('chat-history');
+  if (!el) return;
+  const items = getAiHistory().filter(h => h.type === 'chat');
+  if (!items.length) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="divider"></div><div class="text-muted" style="font-size:12px;margin-bottom:6px;">相談履歴</div>' +
+    items.map((h, i) => `<div class="history-item" onclick="event.stopPropagation();toggleHistoryAnswer('chat-hist-${i}')">
+      <div class="history-date">${formatDateJP3(h.date)}</div>
+      <div class="history-question">${escapeHtml(h.question).slice(0,50)}${h.question.length>50?'...':''}</div>
+      <div class="history-answer" id="chat-hist-${i}">${formatAnalysis(h.answer)}</div>
+    </div>`).join('');
+}
+function renderAnalysisHistory() {
+  const el = document.getElementById('analysis-history');
+  if (!el) return;
+  const items = getAiHistory().filter(h => h.type === 'analysis');
+  if (!items.length) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="divider"></div><div class="text-muted" style="font-size:12px;margin-bottom:6px;">分析履歴</div>' +
+    items.map((h, i) => `<div class="history-item" onclick="event.stopPropagation();toggleHistoryAnswer('analysis-hist-${i}')">
+      <div class="history-date">${formatDateJP3(h.date)}</div>
+      <div class="history-question">${escapeHtml(h.question)}</div>
+      <div class="history-answer" id="analysis-hist-${i}">${formatAnalysis(h.answer)}</div>
+    </div>`).join('');
+}
+function toggleHistoryAnswer(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+function formatDateJP3(iso) {
+  const d = new Date(iso);
+  return `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+// ===== Data Export / Import =====
+function exportData(){
+  const json=JSON.stringify(state,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`BodyManager_${formatDate(new Date())}.json`;a.click();
+  URL.revokeObjectURL(url);
+}
+function importData(event){
+  const file=event.target.files[0];if(!file)return;
+  if(!confirm('現在のデータは上書きされます。よろしいですか？')){event.target.value='';return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{const data=JSON.parse(e.target.result);state={...getDefaultState(),...data,setupComplete:true};saveState();alert('データを復元しました');switchTab('home');}
+    catch(err){alert('ファイルの読み込みに失敗しました');}
+  };
+  reader.readAsText(file);event.target.value='';
+}
+
+// ===== Modal =====
+function openModal(id){document.getElementById(id).classList.add('active');}
+function closeModal(id){document.getElementById(id).classList.remove('active');}
+document.querySelectorAll('.modal-overlay').forEach(o=>{o.addEventListener('click',function(e){if(e.target===this)closeModal(this.id);});});
+
+// ===== Helpers =====
+function formatDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function formatDateJP(s){const d=new Date(s);return`${d.getMonth()+1}月${d.getDate()}日`;}
+function formatDateJP2(s){const d=new Date(s);const wd=['日','月','火','水','木','金','土'];return`${d.getMonth()+1}月${d.getDate()}日（${wd[d.getDay()]}）`;}
+function formatDateShort(s){const d=new Date(s);return`${d.getMonth()+1}/${d.getDate()}`;}
+function escapeHtml(str){const div=document.createElement('div');div.textContent=str;return div.innerHTML;}
+
+// ===== Init =====
+function init(){
+  if(state.setupComplete){document.getElementById('tab-bar').style.display='';switchTab('home');}
+  else{showScreen('screen-setup');document.getElementById('setup-step-1').classList.add('active');}
+}
+window.addEventListener('resize',()=>{if(currentTab==='weight')renderWeightGraph();});
+init();
+</script>
+</body>
+</html>
