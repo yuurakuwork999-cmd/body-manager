@@ -507,6 +507,7 @@ a { color: var(--accent); }
       </div>
     </div>
     <div class="text-muted" id="home-remaining"></div>
+    <div id="home-eval" style="margin-top:8px;padding:8px 10px;border-radius:8px;font-size:13px;line-height:1.6;display:none;"></div>
   </div>
 
   <div class="spacer"></div>
@@ -707,13 +708,24 @@ a { color: var(--accent); }
     </div>
   </div>
 
-  <!-- Analysis buttons -->
+  <!-- Analysis -->
   <div class="card">
     <div class="heading-sm" style="margin-bottom:8px;">食事アドバイスをもらう</div>
-    <div style="display:flex;gap:8px;">
-      <button class="btn btn-primary btn-sm" style="flex:1;" onclick="runAnalysis(30)">過去30日</button>
-      <button class="btn btn-primary btn-sm" style="flex:1;" onclick="runAnalysis(90)">過去90日</button>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <div class="input-group" style="flex:1;margin-bottom:0;">
+        <select id="analysis-period">
+          <option value="3">過去3日</option>
+          <option value="14">過去2週間</option>
+          <option value="30" selected>過去1ヶ月</option>
+          <option value="60">過去2ヶ月</option>
+          <option value="90">過去3ヶ月</option>
+          <option value="180">過去6ヶ月</option>
+          <option value="365">過去1年</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="runAnalysis(parseInt(document.getElementById('analysis-period').value))">分析する</button>
     </div>
+    <div class="text-muted" style="font-size:11px;margin-top:6px;">長期間の分析はデータ量が多くエラーになる場合があります</div>
     <div id="analysis-btn-status"></div>
   </div>
 
@@ -995,6 +1007,25 @@ function calcBMR(p) {
   if (p.bodyFat) { const lbm=p.weight*(1-p.bodyFat/100); return 370+21.6*lbm; }
   return p.gender==='female' ? 447.593+9.247*p.weight+3.098*p.height-4.330*age : 88.362+13.397*p.weight+4.799*p.height-5.677*age;
 }
+function calcTodayTDEE(profileOverride) {
+  const p = profileOverride || getCalcProfile();
+  const bmr = calcBMR(p);
+  if (state.activityMode === 'simple') return bmr * state.activityLevel;
+  const ws = state.weeklySchedule;
+  if (ws && Object.values(ws).some(d => d.length > 0)) {
+    const todayKey = getDayKeyForDate(formatDate(new Date()));
+    const todayExs = ws[todayKey] || [];
+    const overrides = getTodayExerciseOverrides();
+    let todayKcal = 0;
+    todayExs.forEach(ex => {
+      if (overrides[ex.id] === false) return; // off
+      todayKcal += (ex.kcalPerSession||0) * (ex.intensityPercent||100) / 100;
+    });
+    return bmr + todayKcal;
+  }
+  return bmr;
+}
+
 function calcTDEE(profileOverride) {
   const p = profileOverride || getCalcProfile();
   const bmr = calcBMR(p);
@@ -1061,7 +1092,9 @@ function renderHome() {
     const bmi = calcBMI(p.weight, p.height);
     document.getElementById('home-bmi').textContent = bmi.toFixed(1);
     document.getElementById('home-bmi-badge').textContent = 'BMI '+bmi.toFixed(1)+' '+getBMICategory(bmi);
-    const bmr = calcBMR(p), tdee = calcTDEE(p), prot = calcProteinTarget(p);
+    const bmr = calcBMR(p), prot = calcProteinTarget(p);
+    // TDEE adjusted by today's exercise on/off
+    const tdee = calcTodayTDEE(p);
     document.getElementById('home-bmr').textContent = Math.round(bmr);
     document.getElementById('home-tdee').textContent = Math.round(tdee);
     document.getElementById('home-protein').textContent = Math.round(prot);
@@ -1081,6 +1114,58 @@ function renderHome() {
     protBar.className = 'progress-fill ' + (protPct >= 100 ? 'green' : protPct > 70 ? 'warn' : 'green');
     const remaining = Math.round(tdee) - totals.kcal;
     document.getElementById('home-remaining').textContent = remaining >= 0 ? `あと ${remaining} kcal` : `${Math.abs(remaining)} kcal オーバー`;
+
+    // 現時点の食事評価
+    const evalEl = document.getElementById('home-eval');
+    if (totals.kcal > 0) {
+      const kcalRatio = totals.kcal / tdee;
+      const protRatio = totals.protein / prot;
+      let evalText = '';
+      let evalBg = '';
+
+      // 時間帯による期待値
+      const hour = today.getHours();
+      let expectedRatio = 0;
+      if (hour >= 20) expectedRatio = 0.9;
+      else if (hour >= 15) expectedRatio = 0.7;
+      else if (hour >= 12) expectedRatio = 0.45;
+      else expectedRatio = 0.25;
+
+      // カロリー評価
+      if (kcalRatio > 1.1) {
+        evalText = 'カロリーオーバーです。次の食事は軽めにしましょう。';
+        evalBg = 'var(--warn-bg)';
+      } else if (kcalRatio > expectedRatio + 0.2) {
+        evalText = 'ペースがやや早めです。残りの食事は控えめに。';
+        evalBg = 'var(--warn-bg)';
+      } else if (hour >= 20 && kcalRatio >= 0.8 && kcalRatio <= 1.1) {
+        evalText = 'カロリーは良いペースです！';
+        evalBg = 'var(--accent-bg)';
+      } else if (hour >= 20 && kcalRatio < 0.7) {
+        evalText = 'カロリーが少なめです。無理な制限は避けましょう。';
+        evalBg = 'var(--warn-bg)';
+      } else {
+        evalText = 'いい感じです。';
+        evalBg = 'var(--accent-bg)';
+      }
+
+      // タンパク質評価を追加
+      if (hour >= 15 && protRatio < 0.5) {
+        evalText += ' タンパク質が不足しています。肉・魚・卵・豆類を意識してみて。';
+        evalBg = 'var(--warn-bg)';
+      } else if (hour >= 20 && protRatio < 0.8) {
+        evalText += ' タンパク質がやや不足気味です。';
+        evalBg = 'var(--warn-bg)';
+      } else if (hour >= 20 && protRatio >= 0.9) {
+        evalText += ' タンパク質もしっかり摂れています！';
+      }
+
+      evalEl.style.display = '';
+      evalEl.style.background = evalBg;
+      evalEl.textContent = evalText;
+    } else {
+      evalEl.style.display = 'none';
+    }
   }
   renderTodayExercise();
 }
@@ -1244,19 +1329,20 @@ function renderMealList() {
   nr.style.display='none';
   let html = '';
   let mealKcal = 0, mealProtein = 0;
-  meals.forEach((meal, mi) => {
-    (meal.items||[]).forEach(it => {
+  meals.forEach((meal) => {
+    (meal.items||[]).forEach((it, idx) => {
       mealKcal += it.kcal||0;
       mealProtein += it.protein_g||0;
       html += `<div class="meal-item">
         <div class="meal-item-header">
           <span class="meal-item-name">${escapeHtml(it.name)}</span>
-          <span class="text-muted">${it.kcal||0}kcal / ${(it.protein_g||0).toFixed(1)}g</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="text-muted">${it.kcal||0}kcal / ${(it.protein_g||0).toFixed(1)}g</span>
+            <button class="icon-btn" onclick="deleteMealItem('${meal.id}',${idx})" style="width:22px;height:22px;font-size:11px;">&times;</button>
+          </div>
         </div>
       </div>`;
     });
-    html += `<div style="text-align:right;padding:4px 0 8px;">
-      <button class="btn btn-danger btn-sm" onclick="deleteMealRecord('${meal.id}')">削除</button></div>`;
   });
   // Meal type subtotal
   html += `<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--border);font-weight:500;font-size:13px;">
@@ -1284,6 +1370,18 @@ function renderDayTotals() {
 function deleteMealRecord(id) {
   if (!confirm('この記録を削除しますか？')) return;
   state.mealRecords = state.mealRecords.filter(m => m.id !== id);
+  saveState(); renderMealScreen(); renderHome();
+}
+
+function deleteMealItem(mealId, itemIdx) {
+  const meal = state.mealRecords.find(m => m.id === mealId);
+  if (!meal) return;
+  const itemName = meal.items[itemIdx]?.name || '';
+  if (!confirm(`「${itemName}」を削除しますか？`)) return;
+  meal.items.splice(itemIdx, 1);
+  if (meal.items.length === 0) {
+    state.mealRecords = state.mealRecords.filter(m => m.id !== mealId);
+  }
   saveState(); renderMealScreen(); renderHome();
 }
 
@@ -1507,6 +1605,7 @@ function toggleTodayExercise(id, active) {
   else overrides[id] = false;
   saveTodayExerciseOverrides(overrides);
   renderTodayExercise();
+  renderHome(); // TDEE再計算
 }
 
 // ===== Exercise =====
@@ -1720,9 +1819,13 @@ function saveExerciseSettings(){ }
 // ===== My Menu Screen =====
 function renderMyMenu(){
   const p=state.profile,age=p.birthdate?calcAge(p.birthdate):'--';
+  const cp = getCalcProfile();
+  const profBmi = (cp.weight && cp.height) ? calcBMI(cp.weight, cp.height).toFixed(1) : '--';
+  const profBmr = (cp.weight && cp.height && cp.birthdate) ? Math.round(calcBMR(cp)) : '--';
   document.getElementById('settings-profile-info').innerHTML=`<div style="font-size:13px;line-height:2;">
     ${escapeHtml(p.name)} / ${p.gender==='male'?'男性':'女性'} / ${age}歳<br>
-    身長 ${p.height}cm / 体重 ${p.weight}kg${p.bodyFat?` / 体脂肪率 ${p.bodyFat}%`:''}${p.muscleMass?` / 骨格筋率 ${p.muscleMass}%`:''}</div>`;
+    身長 ${p.height}cm / 体重 ${cp.weight}kg${cp.bodyFat?` / 体脂肪率 ${cp.bodyFat}%`:''}${cp.muscleMass?` / 骨格筋率 ${cp.muscleMass}%`:''}<br>
+    BMI ${profBmi} / 基礎代謝 ${profBmr}kcal</div>`;
   // 運動設定のモード表示
   const isSimple = state.activityMode === 'simple';
   document.getElementById('settings-toggle-simple').classList.toggle('active', isSimple);
@@ -1835,7 +1938,7 @@ function renderRecipeList(){
   if(!state.recipes.length){list.innerHTML='<div class="text-muted" style="text-align:center;padding:8px;">未登録</div>';return;}
   list.innerHTML=state.recipes.map((r,i)=>`
     <div class="recipe-item"><div>${escapeHtml(r.name)}${r.servingNote?'<br><span class="text-muted" style="font-size:11px;">'+escapeHtml(r.servingNote)+'</span>':''}<br><span class="text-muted">${r.kcal}kcal / ${r.protein_g}g（1食分）</span></div>
-    <div class="exercise-actions"><button class="icon-btn" onclick="editRecipe(${i})">&#9998;</button><button class="icon-btn" onclick="deleteRecipe(${i})">&times;</button></div></div>`).join('');
+    <button class="icon-btn" onclick="deleteRecipe(${i})">&times;</button></div>`).join('');
 }
 function openRecipeModal(idx){
   document.getElementById('recipe-name').value='';document.getElementById('recipe-ingredients').value='';
