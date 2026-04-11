@@ -1703,8 +1703,8 @@ function renderWeeklySchedule(containerId) {
       html += `<div><span style="font-size:13px;font-weight:500;">${escapeHtml(ex.name)}</span>`;
       html += `<span class="text-muted" style="font-size:11px;margin-left:6px;">${ex.minutes}分 / 強度${ex.intensityPercent||100}% / ${kcal}kcal</span></div>`;
       html += `<div style="display:flex;gap:4px;">`;
-      html += `<button class="icon-btn" onclick="editScheduleExercise('${day}','${ex.id}')" style="width:24px;height:24px;font-size:12px;">&#9998;</button>`;
-      html += `<button class="icon-btn" onclick="deleteScheduleExercise('${day}','${ex.id}')" style="width:24px;height:24px;font-size:12px;">&times;</button>`;
+      html += `<button class="icon-btn" onclick="event.stopPropagation();editScheduleExercise('${day}','${ex.id}')" style="width:24px;height:24px;font-size:12px;">&#9998;</button>`;
+      html += `<button class="icon-btn" onclick="event.stopPropagation();deleteScheduleExercise('${day}','${ex.id}')" style="width:24px;height:24px;font-size:12px;">&times;</button>`;
       html += `</div>`;
       html += `</div>`;
     });
@@ -2007,8 +2007,8 @@ function renderRecipeList(){
   const list=document.getElementById('recipe-list');
   if(!state.recipes.length){list.innerHTML='<div class="text-muted" style="text-align:center;padding:8px;">未登録</div>';return;}
   list.innerHTML=state.recipes.map((r,i)=>`
-    <div class="recipe-item"><div>${escapeHtml(r.name)}${r.servingNote?'<br><span class="text-muted" style="font-size:11px;">'+escapeHtml(r.servingNote)+'</span>':''}<br><span class="text-muted">${r.kcal}kcal / ${r.protein_g}g（1食分）</span></div>
-    <button class="icon-btn" onclick="deleteRecipe(${i})">&times;</button></div>`).join('');
+    <div class="recipe-item"><div>${escapeHtml(r.name)}${r.servingNote?'<br><span class="text-muted" style="font-size:11px;">'+escapeHtml(r.servingNote)+'</span>':''}<br><span class="text-muted">${r.ingredients?escapeHtml(r.ingredients)+'<br>':''}${r.kcal}kcal / ${r.protein_g}g（1食分）</span></div>
+    <div style="display:flex;gap:4px;"><button class="icon-btn" onclick="editRecipe(${i})">&#9998;</button><button class="icon-btn" onclick="deleteRecipe(${i})">&times;</button></div></div>`).join('');
 }
 function openRecipeModal(idx){
   document.getElementById('recipe-name').value='';document.getElementById('recipe-ingredients').value='';
