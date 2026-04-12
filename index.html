@@ -1033,7 +1033,9 @@ function calcTodayTDEE(profileOverride) {
   // 臨時追加分
   const todayTempKey = 'todayTempEx_' + formatDate(new Date());
   try { const temp = JSON.parse(localStorage.getItem(todayTempKey)) || []; temp.forEach(ex => { todayKcal += ex.kcal||0; }); } catch(e){}
-  return bmr + todayKcal;
+  // 日常生活活動分（NEAT: 基礎代謝の約20%）= 歩行・家事・階段など
+  const neat = bmr * 0.2;
+  return bmr + neat + todayKcal;
 }
 
 function calcTDEE(profileOverride) {
@@ -1047,12 +1049,14 @@ function calcTDEE(profileOverride) {
     Object.values(ws).forEach(dayExercises => {
       dayExercises.forEach(ex => { weeklyKcal += (ex.kcalPerSession||0) * (ex.intensityPercent||100) / 100; });
     });
-    return bmr + weeklyKcal / 7;
+    const neat = bmr * 0.2;
+    return bmr + neat + weeklyKcal / 7;
   }
   // 旧exercises形式の互換
   let wk = 0;
   state.exercises.forEach(ex => { wk += (ex.kcalPerSession||0)*(ex.intensityPercent/100)*ex.timesPerWeek; });
-  return bmr + wk / 7;
+  const neat2 = bmr * 0.2;
+  return bmr + neat2 + wk / 7;
 }
 function calcProteinTarget(p) {
   if (p.bodyFat) return p.weight*(1-p.bodyFat/100)*2.0;
