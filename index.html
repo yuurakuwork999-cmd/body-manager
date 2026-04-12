@@ -1104,17 +1104,17 @@ function renderHome() {
     document.getElementById('home-tdee').textContent = Math.round(tdee);
     document.getElementById('home-protein').textContent = Math.round(prot);
 
-    // 体脂肪率・骨格筋率・体内年齢（プロフィールの値もフォールバック）
-    const dispBodyFat = p.bodyFat || state.profile.bodyFat;
-    const dispMuscle = p.muscleMass || state.profile.muscleMass;
-    if (dispBodyFat) {
+    // 体脂肪率・体内年齢（プロフィールの値もフォールバック）
+    const dispBodyFat = p.bodyFat != null ? p.bodyFat : state.profile.bodyFat;
+    const dispMuscle = p.muscleMass != null ? p.muscleMass : state.profile.muscleMass;
+    if (dispBodyFat != null && dispBodyFat > 0) {
       p.bodyFat = dispBodyFat;
       document.getElementById('home-bodyfat').textContent = dispBodyFat.toFixed(1);
       document.getElementById('home-bf-item').style.display = '';
     } else { document.getElementById('home-bf-item').style.display = 'none'; }
     document.getElementById('home-mm-item').style.display = 'none';
     // 体内年齢の推定（BMI・体脂肪率・骨格筋率から簡易計算）
-    if (dispBodyFat && p.birthdate) {
+    if (dispBodyFat != null && dispBodyFat > 0 && p.birthdate) {
       const realAge = calcAge(p.birthdate);
       const idealBF = state.profile.gender === 'male' ? 20 : 25;
       let bodyAge = realAge;
@@ -1802,10 +1802,7 @@ function renderWeeklySchedule(containerId) {
       html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0 2px 32px;">`;
       html += `<div><span style="font-size:13px;font-weight:500;">${escapeHtml(ex.name)}</span>`;
       html += `<span class="text-muted" style="font-size:11px;margin-left:6px;">${ex.minutes}分 / 強度${ex.intensityPercent||100}% / ${kcal}kcal</span></div>`;
-      html += `<div style="display:flex;gap:4px;">`;
-      html += `<button class="icon-btn" onclick="event.stopPropagation();editScheduleExercise('${day}','${ex.id}')" style="width:24px;height:24px;font-size:12px;">&#9998;</button>`;
       html += `<button class="icon-btn" onclick="event.stopPropagation();deleteScheduleExercise('${day}','${ex.id}')" style="width:24px;height:24px;font-size:12px;">&times;</button>`;
-      html += `</div>`;
       html += `</div>`;
     });
     html += `</div>`;
