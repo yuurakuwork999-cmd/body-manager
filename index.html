@@ -511,7 +511,7 @@ a { color: var(--accent); }
       <div style="flex:1;">
         <div class="summary-label">タンパク質</div>
         <div><span id="home-intake-protein" style="font-size:20px;font-weight:500;">0</span><span class="summary-unit">g</span></div>
-        <div class="progress-bar"><div class="progress-fill green" id="home-protein-bar" style="width:0%"></div></div>
+        <div class="progress-bar"><div class="progress-fill green" id="home-protein-bar" style="width:0%"></div><div class="progress-fill" id="home-protein-over" style="width:0%;position:absolute;right:0;top:0;height:100%;background:#3A7A3A;display:none;"></div></div>
       </div>
     </div>
     <div class="text-muted" id="home-remaining"></div>
@@ -1160,9 +1160,19 @@ function renderHome() {
       kcalOver.style.width = '0%';
       kcalOver.style.display = 'none';
     }
+    const protRaw = Math.round(totals.protein / prot * 100);
     const protBar = document.getElementById('home-protein-bar');
+    const protOver = document.getElementById('home-protein-over');
     protBar.style.width = protPct + '%';
-    protBar.className = 'progress-fill ' + (protPct >= 100 ? 'green' : protPct > 70 ? 'warn' : 'green');
+    protBar.className = 'progress-fill green';
+    if (protRaw > 100) {
+      const overPct = Math.min(100, protRaw - 100);
+      protOver.style.width = overPct + '%';
+      protOver.style.display = '';
+    } else {
+      protOver.style.width = '0%';
+      protOver.style.display = 'none';
+    }
     const remaining = Math.round(tdee) - totals.kcal;
     document.getElementById('home-remaining').textContent = remaining >= 0 ? `あと ${remaining} kcal` : `${Math.abs(remaining)} kcal オーバー`;
 
