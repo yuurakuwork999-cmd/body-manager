@@ -282,7 +282,7 @@ a { color: var(--accent); }
 .progress-bar { height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; margin-top: 4px; position: relative; }
 .progress-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
 .progress-fill.green { background: var(--accent); }
-.progress-fill.warn { background: var(--warn); }
+.progress-fill.warn { background: #E0C9A0; }
 .progress-fill.over { background: #C94040; }
 
 /* Personal constant / recipe item */
@@ -608,7 +608,7 @@ a { color: var(--accent); }
 <div class="screen" id="screen-mymenu">
   <div class="heading-md" style="margin-bottom:14px;">My Menu</div>
 
-  <div class="card acc-card" onclick="toggleAccordion('acc-profile')">
+  <div class="card acc-card" onclick="toggleAccordion('acc-profile',event)">
     <div style="display:flex;align-items:center;justify-content:space-between;">
       <div class="heading-sm">プロフィール</div>
       <span class="acc-arrow" id="acc-profile-arrow">&#9654;</span>
@@ -623,7 +623,7 @@ a { color: var(--accent); }
   </div>
 
   <!-- Accordion sections -->
-  <div class="card acc-card" onclick="toggleAccordion('acc-exercise')">
+  <div class="card acc-card" onclick="toggleAccordion('acc-exercise',event)">
     <div style="display:flex;align-items:center;justify-content:space-between;">
       <div class="heading-sm">運動設定</div>
       <span class="acc-arrow" id="acc-exercise-arrow">&#9654;</span>
@@ -657,7 +657,7 @@ a { color: var(--accent); }
     </div>
   </div>
 
-  <div class="card acc-card" onclick="toggleAccordion('acc-foods')">
+  <div class="card acc-card" onclick="toggleAccordion('acc-foods',event)">
     <div style="display:flex;align-items:center;justify-content:space-between;">
       <div class="heading-sm">よく食べる食材</div>
       <span class="acc-arrow" id="acc-foods-arrow">&#9654;</span>
@@ -676,7 +676,7 @@ a { color: var(--accent); }
     </div>
   </div>
 
-  <div class="card acc-card" onclick="toggleAccordion('acc-recipes')">
+  <div class="card acc-card" onclick="toggleAccordion('acc-recipes',event)">
     <div style="display:flex;align-items:center;justify-content:space-between;">
       <div class="heading-sm">マイレシピ</div>
       <span class="acc-arrow" id="acc-recipes-arrow">&#9654;</span>
@@ -1014,19 +1014,21 @@ function calcTodayTDEE(profileOverride) {
   const p = profileOverride || getCalcProfile();
   const bmr = calcBMR(p);
   if (state.activityMode === 'simple') return bmr * state.activityLevel;
+  let todayKcal = 0;
   const ws = state.weeklySchedule;
   if (ws && Object.values(ws).some(d => d.length > 0)) {
     const todayKey = getDayKeyForDate(formatDate(new Date()));
     const todayExs = ws[todayKey] || [];
     const overrides = getTodayExerciseOverrides();
-    let todayKcal = 0;
     todayExs.forEach(ex => {
-      if (overrides[ex.id] === false) return; // off
+      if (overrides[ex.id] === false) return;
       todayKcal += (ex.kcalPerSession||0) * (ex.intensityPercent||100) / 100;
     });
-    return bmr + todayKcal;
   }
-  return bmr;
+  // 臨時追加分
+  const todayTempKey = 'todayTempEx_' + formatDate(new Date());
+  try { const temp = JSON.parse(localStorage.getItem(todayTempKey)) || []; temp.forEach(ex => { todayKcal += ex.kcal||0; }); } catch(e){}
+  return bmr + todayKcal;
 }
 
 function calcTDEE(profileOverride) {
@@ -1102,26 +1104,25 @@ function renderHome() {
     document.getElementById('home-tdee').textContent = Math.round(tdee);
     document.getElementById('home-protein').textContent = Math.round(prot);
 
-    // 体脂肪率・骨格筋率・体内年齢
-    if (p.bodyFat) {
-      document.getElementById('home-bodyfat').textContent = p.bodyFat.toFixed(1);
+    // 体脂肪率・骨格筋率・体内年齢（プロフィールの値もフォールバック）
+    const dispBodyFat = p.bodyFat || state.profile.bodyFat;
+    const dispMuscle = p.muscleMass || state.profile.muscleMass;
+    if (dispBodyFat) {
+      p.bodyFat = dispBodyFat;
+      document.getElementById('home-bodyfat').textContent = dispBodyFat.toFixed(1);
       document.getElementById('home-bf-item').style.display = '';
     } else { document.getElementById('home-bf-item').style.display = 'none'; }
-    if (p.muscleMass) {
-      document.getElementById('home-muscle').textContent = p.muscleMass.toFixed(1);
-      document.getElementById('home-mm-item').style.display = '';
-    } else { document.getElementById('home-mm-item').style.display = 'none'; }
+    document.getElementById('home-mm-item').style.display = 'none';
     // 体内年齢の推定（BMI・体脂肪率・骨格筋率から簡易計算）
-    if (p.bodyFat && p.birthdate) {
+    if (dispBodyFat && p.birthdate) {
       const realAge = calcAge(p.birthdate);
-      // 簡易推定: 基準BMI22, 基準体脂肪(男20%/女25%), 骨格筋率が高いほど若い
-      const idealBF = p.gender === 'male' ? 20 : 25;
+      const idealBF = state.profile.gender === 'male' ? 20 : 25;
       let bodyAge = realAge;
-      bodyAge += (p.bodyFat - idealBF) * 0.5; // 体脂肪が基準より高い→年齢上がる
-      bodyAge += (bmi - 22) * 0.3; // BMIが22から離れる→年齢上がる
-      if (p.muscleMass) {
-        const idealMM = p.gender === 'male' ? 35 : 28;
-        bodyAge -= (p.muscleMass - idealMM) * 0.4; // 骨格筋が多い→年齢下がる
+      bodyAge += (dispBodyFat - idealBF) * 0.5;
+      bodyAge += (bmi - 22) * 0.3;
+      if (dispMuscle) {
+        const idealMM = state.profile.gender === 'male' ? 35 : 28;
+        bodyAge -= (dispMuscle - idealMM) * 0.4;
       }
       bodyAge = Math.max(realAge - 15, Math.min(realAge + 15, Math.round(bodyAge)));
       document.getElementById('home-bodyage').textContent = bodyAge;
@@ -2445,7 +2446,9 @@ function renderNutriHistory() {
 }
 
 // ===== Accordion =====
-function toggleAccordion(id) {
+function toggleAccordion(id, ev) {
+  // ボタンやinputからのクリックはトグルしない
+  if (ev && ev.target && (ev.target.closest('button') || ev.target.closest('input') || ev.target.closest('select') || ev.target.closest('textarea') || ev.target.closest('label'))) return;
   const body = document.getElementById(id);
   const arrow = document.getElementById(id + '-arrow');
   body.classList.toggle('open');
