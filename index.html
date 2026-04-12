@@ -281,7 +281,7 @@ a { color: var(--accent); }
 /* Progress bar */
 .progress-bar { height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; margin-top: 4px; position: relative; }
 .progress-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
-.progress-fill.green { background: var(--accent); }
+.progress-fill.green { background: #A3C9A3; }
 .progress-fill.warn { background: #E0C9A0; }
 .progress-fill.over { background: #C94040; }
 
@@ -476,19 +476,17 @@ a { color: var(--accent); }
     <div id="home-greeting" style="font-weight:500;"></div>
   </div>
   <div class="card">
-    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div class="heading-sm">現在の体重</div>
-      <span class="badge badge-accent" id="home-bmi-badge"></span>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
+        <span class="badge" id="home-bmi-badge" style="background:#E8F0E8;color:#4A7A4A;"></span>
+        <span class="badge" id="home-bf-badge" style="background:#E4E8F8;color:#4A5A8A;display:none;"></span>
+        <span class="badge" id="home-ba-badge" style="background:#F8E4E8;color:#8A4A5A;display:none;"></span>
+      </div>
     </div>
-    <div style="display:flex;align-items:flex-end;justify-content:space-between;">
-      <div>
-        <div style="font-size:36px;font-weight:500;" id="home-weight">--</div>
-        <div class="text-muted" id="home-weight-date">記録なし</div>
-      </div>
-      <div id="home-body-badges" style="text-align:right;display:flex;flex-direction:column;gap:4px;">
-        <span class="badge badge-accent" id="home-bf-badge" style="display:none;"></span>
-        <span class="badge badge-accent" id="home-ba-badge" style="display:none;"></span>
-      </div>
+    <div>
+      <div style="font-size:36px;font-weight:500;" id="home-weight">--</div>
+      <div class="text-muted" id="home-weight-date">記録なし</div>
     </div>
   </div>
   <div class="summary-grid">
@@ -1274,19 +1272,24 @@ function renderHome() {
         evalBg = 'var(--accent-bg)';
       }
 
-      // タンパク質評価
-      if (hour >= 15 && protRatio < 0.4) {
-        evalText += ` タンパク質が目標の${Math.round(protRatio*100)}%と不足中。あと${remainProt}g、鶏肉・魚・卵・豆腐で補いましょう。`;
-        evalBg = 'var(--warn-bg)';
-      } else if (hour >= 15 && protRatio < 0.6) {
-        evalText += ` タンパク質があと${remainProt}g不足気味。夕食に肉や魚を取り入れて。`;
-        evalBg = 'var(--warn-bg)';
-      } else if (hour >= 20 && protRatio < 0.8) {
-        evalText += ` タンパク質${Math.round(protRatio*100)}%でやや足りません。プロテインやゆで卵で手軽に補えます。`;
-        evalBg = 'var(--warn-bg)';
-      } else if (hour >= 20 && protRatio >= 0.9) {
-        evalText += ` タンパク質も${Math.round(protRatio*100)}%達成！`;
+      // タンパク質評価（時間帯を問わず表示）
+      const protComment = [];
+      if (protRatio >= 1.0) {
+        protComment.push(`タンパク質${Math.round(totals.protein)}g、目標達成です！筋肉の維持・回復にバッチリ。`);
+      } else if (protRatio >= 0.8) {
+        protComment.push(`タンパク質${Math.round(totals.protein)}g（目標の${Math.round(protRatio*100)}%）、あと${remainProt}gで達成。ゆで卵1個やプロテインで届きます。`);
+      } else if (hour < 12 && protRatio > 0) {
+        protComment.push(`タンパク質は${Math.round(totals.protein)}g。朝からタンパク質を摂れているのは良い習慣です。残り${remainProt}gを昼・夕で意識して。`);
+      } else if (hour < 15) {
+        protComment.push(`タンパク質${Math.round(totals.protein)}g（目標の${Math.round(protRatio*100)}%）。夕食で肉・魚・卵を取り入れて、あと${remainProt}gを目指しましょう。`);
+      } else if (protRatio < 0.4) {
+        protComment.push(`タンパク質が${Math.round(totals.protein)}gとかなり不足（目標の${Math.round(protRatio*100)}%）。あと${remainProt}g必要です。鶏肉・魚・豆腐・プロテインで補いましょう。`);
+      } else if (protRatio < 0.6) {
+        protComment.push(`タンパク質${Math.round(totals.protein)}g、あと${remainProt}g不足気味。夕食に肉や魚メインの一品を追加するのがおすすめ。`);
+      } else {
+        protComment.push(`タンパク質${Math.round(totals.protein)}g（${Math.round(protRatio*100)}%）。もう少しで目標に届きます。`);
       }
+      if (protComment.length) evalText += '\n' + protComment.join(' ');
 
       // 週間トレンドコメントを追加
       if (weekComment) evalText += '\n' + weekComment;
