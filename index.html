@@ -279,7 +279,7 @@ a { color: var(--accent); }
 
 
 /* Progress bar */
-.progress-bar { height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; margin-top: 4px; }
+.progress-bar { height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; margin-top: 4px; position: relative; }
 .progress-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
 .progress-fill.green { background: var(--accent); }
 .progress-fill.warn { background: var(--warn); }
@@ -488,6 +488,9 @@ a { color: var(--accent); }
     <div class="summary-item"><div class="summary-label">目標カロリー</div><div><span class="summary-value" id="home-tdee">--</span><span class="summary-unit">kcal</span></div></div>
     <div class="summary-item"><div class="summary-label">目標タンパク質</div><div><span class="summary-value" id="home-protein">--</span><span class="summary-unit">g</span></div></div>
     <div class="summary-item"><div class="summary-label">BMI</div><div><span class="summary-value" id="home-bmi">--</span></div></div>
+    <div class="summary-item" id="home-bf-item" style="display:none;"><div class="summary-label">体脂肪率</div><div><span class="summary-value" id="home-bodyfat">--</span><span class="summary-unit">%</span></div></div>
+    <div class="summary-item" id="home-mm-item" style="display:none;"><div class="summary-label">骨格筋率</div><div><span class="summary-value" id="home-muscle">--</span><span class="summary-unit">%</span></div></div>
+    <div class="summary-item" id="home-ba-item" style="display:none;"><div class="summary-label">体内年齢</div><div><span class="summary-value" id="home-bodyage">--</span><span class="summary-unit">歳</span></div></div>
   </div>
 
   <!-- Today's intake -->
@@ -498,7 +501,7 @@ a { color: var(--accent); }
       <div style="flex:1;">
         <div class="summary-label">カロリー</div>
         <div><span id="home-intake-kcal" style="font-size:20px;font-weight:500;">0</span><span class="summary-unit">kcal</span></div>
-        <div class="progress-bar"><div class="progress-fill green" id="home-kcal-bar" style="width:0%"></div></div>
+        <div class="progress-bar"><div class="progress-fill green" id="home-kcal-bar" style="width:0%"></div><div class="progress-fill over" id="home-kcal-over" style="width:0%;position:absolute;right:0;top:0;height:100%;"></div></div>
       </div>
       <div style="flex:1;">
         <div class="summary-label">タンパク質</div>
@@ -1099,16 +1102,52 @@ function renderHome() {
     document.getElementById('home-tdee').textContent = Math.round(tdee);
     document.getElementById('home-protein').textContent = Math.round(prot);
 
+    // 体脂肪率・骨格筋率・体内年齢
+    if (p.bodyFat) {
+      document.getElementById('home-bodyfat').textContent = p.bodyFat.toFixed(1);
+      document.getElementById('home-bf-item').style.display = '';
+    } else { document.getElementById('home-bf-item').style.display = 'none'; }
+    if (p.muscleMass) {
+      document.getElementById('home-muscle').textContent = p.muscleMass.toFixed(1);
+      document.getElementById('home-mm-item').style.display = '';
+    } else { document.getElementById('home-mm-item').style.display = 'none'; }
+    // 体内年齢の推定（BMI・体脂肪率・骨格筋率から簡易計算）
+    if (p.bodyFat && p.birthdate) {
+      const realAge = calcAge(p.birthdate);
+      // 簡易推定: 基準BMI22, 基準体脂肪(男20%/女25%), 骨格筋率が高いほど若い
+      const idealBF = p.gender === 'male' ? 20 : 25;
+      let bodyAge = realAge;
+      bodyAge += (p.bodyFat - idealBF) * 0.5; // 体脂肪が基準より高い→年齢上がる
+      bodyAge += (bmi - 22) * 0.3; // BMIが22から離れる→年齢上がる
+      if (p.muscleMass) {
+        const idealMM = p.gender === 'male' ? 35 : 28;
+        bodyAge -= (p.muscleMass - idealMM) * 0.4; // 骨格筋が多い→年齢下がる
+      }
+      bodyAge = Math.max(realAge - 15, Math.min(realAge + 15, Math.round(bodyAge)));
+      document.getElementById('home-bodyage').textContent = bodyAge;
+      document.getElementById('home-ba-item').style.display = '';
+    } else { document.getElementById('home-ba-item').style.display = 'none'; }
+
     // Today intake
     const todayStr = formatDate(today);
     const totals = getDayTotals(todayStr);
     document.getElementById('home-intake-kcal').textContent = totals.kcal;
     document.getElementById('home-intake-protein').textContent = totals.protein;
-    const kcalPct = Math.min(100, Math.round(totals.kcal / tdee * 100));
+    const kcalRaw = Math.round(totals.kcal / tdee * 100);
+    const kcalPct = Math.min(100, kcalRaw);
     const protPct = Math.min(100, Math.round(totals.protein / prot * 100));
     const kcalBar = document.getElementById('home-kcal-bar');
+    const kcalOver = document.getElementById('home-kcal-over');
     kcalBar.style.width = kcalPct + '%';
-    kcalBar.className = 'progress-fill ' + (kcalPct > 100 ? 'over' : kcalPct > 85 ? 'warn' : 'green');
+    kcalBar.className = 'progress-fill ' + (kcalRaw > 85 ? 'warn' : 'green');
+    if (kcalRaw > 100) {
+      const overPct = Math.min(100, kcalRaw - 100);
+      kcalOver.style.width = overPct + '%';
+      kcalOver.style.display = '';
+    } else {
+      kcalOver.style.width = '0%';
+      kcalOver.style.display = 'none';
+    }
     const protBar = document.getElementById('home-protein-bar');
     protBar.style.width = protPct + '%';
     protBar.className = 'progress-fill ' + (protPct >= 100 ? 'green' : protPct > 70 ? 'warn' : 'green');
@@ -1577,11 +1616,11 @@ async function analyzeMeal() {
 食事の内容からカロリーとタンパク質を計算してください。${constList}
 
 以下のJSON形式のみで返してください（他のテキストは不要）：
-{"items":[{"name":"食品名","kcal":数値,"protein_g":数値}],"total_kcal":数値,"total_protein_g":数値,"mode":"add"か"replace"}
+{"items":[{"name":"食品名（分量込み。例：白米150g、ゆで卵1個）","kcal":数値,"protein_g":数値}],"total_kcal":数値,"total_protein_g":数値,"mode":"add"か"replace"}
 
 modeについて：
-- "add": 新しい食事の追加（既存の記録はそのまま残す）
-- "replace": 既存の記録を置き換える（変更・修正の指示があった場合）${existingInfo}`;
+- "add": 新しい食品だけを追加する（既存の食品はitemsに含めないこと。追加分のみ返す）
+- "replace": 既存の記録を全て置き換える（変更・修正・削除の指示があった場合。変更後の全食品を返す）${existingInfo}`;
 
     const result = await callGemini(systemPrompt + '\n\n食事内容：' + input);
 
@@ -1649,8 +1688,13 @@ function renderTodayExercise() {
     return;
   }
 
+  // 臨時追加分も取得
+  const todayTempKey = 'todayTempEx_' + formatDate(new Date());
+  let tempExercises = [];
+  try { tempExercises = JSON.parse(localStorage.getItem(todayTempKey)) || []; } catch(e){}
+
   let totalKcal = 0;
-  list.innerHTML = todayExercises.map(ex => {
+  let html = todayExercises.map(ex => {
     const active = overrides[ex.id] !== false;
     const kcal = Math.round((ex.kcalPerSession||0) * (ex.intensityPercent||100) / 100);
     if (active) totalKcal += kcal;
@@ -1666,7 +1710,62 @@ function renderTodayExercise() {
       </label>
     </div>`;
   }).join('');
+
+  // 臨時種目を表示
+  tempExercises.forEach((ex, i) => {
+    totalKcal += ex.kcal || 0;
+    html += `<div class="today-ex-item">
+      <div>
+        <div style="font-weight:500;font-size:13px;">${escapeHtml(ex.name)} <span class="badge badge-warn" style="font-size:10px;">臨時</span></div>
+        <div class="text-muted" style="font-size:12px;">${ex.minutes}分 / ${ex.kcal||0}kcal</div>
+      </div>
+      <button class="icon-btn" onclick="deleteTempExercise(${i})" style="width:24px;height:24px;font-size:11px;">&times;</button>
+    </div>`;
+  });
+
+  // 臨時追加入力
+  html += `<div style="margin-top:8px;">
+    <div class="input-group" style="margin-bottom:6px;">
+      <input type="text" id="temp-ex-input" placeholder="例：バイク60分" style="font-size:13px;padding:8px 10px;">
+    </div>
+    <button class="btn btn-secondary btn-sm btn-block" onclick="addTempExercise()">今日だけ追加</button>
+  </div>`;
+
+  list.innerHTML = html;
   document.getElementById('today-ex-kcal').textContent = Math.round(totalKcal) + ' kcal';
+}
+
+async function addTempExercise() {
+  const input = document.getElementById('temp-ex-input').value.trim();
+  if (!input) return;
+  // 種目名と時間を簡易パース or AIで解析
+  let name = input, minutes = 30, kcal = 0;
+  const minMatch = input.match(/(\d+)\s*分/);
+  if (minMatch) minutes = parseInt(minMatch[1]);
+  name = input.replace(/\d+\s*分/, '').trim() || input;
+
+  try {
+    kcal = await estimateExerciseCalories(name, minutes);
+  } catch(e) { kcal = Math.round(minutes * 5); }
+
+  const todayTempKey = 'todayTempEx_' + formatDate(new Date());
+  let tempExercises = [];
+  try { tempExercises = JSON.parse(localStorage.getItem(todayTempKey)) || []; } catch(e){}
+  tempExercises.push({ name, minutes, kcal });
+  localStorage.setItem(todayTempKey, JSON.stringify(tempExercises));
+  document.getElementById('temp-ex-input').value = '';
+  renderTodayExercise();
+  renderHome();
+}
+
+function deleteTempExercise(idx) {
+  const todayTempKey = 'todayTempEx_' + formatDate(new Date());
+  let tempExercises = [];
+  try { tempExercises = JSON.parse(localStorage.getItem(todayTempKey)) || []; } catch(e){}
+  tempExercises.splice(idx, 1);
+  localStorage.setItem(todayTempKey, JSON.stringify(tempExercises));
+  renderTodayExercise();
+  renderHome();
 }
 
 function toggleTodayExercise(id, active) {
