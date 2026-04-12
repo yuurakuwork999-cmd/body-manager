@@ -480,17 +480,22 @@ a { color: var(--accent); }
       <div class="heading-sm">現在の体重</div>
       <span class="badge badge-accent" id="home-bmi-badge"></span>
     </div>
-    <div style="font-size:36px;font-weight:500;" id="home-weight">--</div>
-    <div class="text-muted" id="home-weight-date">記録なし</div>
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;">
+      <div>
+        <div style="font-size:36px;font-weight:500;" id="home-weight">--</div>
+        <div class="text-muted" id="home-weight-date">記録なし</div>
+      </div>
+      <div id="home-body-badges" style="text-align:right;display:flex;flex-direction:column;gap:4px;">
+        <span class="badge badge-accent" id="home-bf-badge" style="display:none;"></span>
+        <span class="badge badge-accent" id="home-ba-badge" style="display:none;"></span>
+      </div>
+    </div>
   </div>
   <div class="summary-grid">
     <div class="summary-item"><div class="summary-label">基礎代謝</div><div><span class="summary-value" id="home-bmr">--</span><span class="summary-unit">kcal</span></div></div>
     <div class="summary-item"><div class="summary-label">目標カロリー</div><div><span class="summary-value" id="home-tdee">--</span><span class="summary-unit">kcal</span></div></div>
     <div class="summary-item"><div class="summary-label">目標タンパク質</div><div><span class="summary-value" id="home-protein">--</span><span class="summary-unit">g</span></div></div>
     <div class="summary-item"><div class="summary-label">BMI</div><div><span class="summary-value" id="home-bmi">--</span></div></div>
-    <div class="summary-item" id="home-bf-item" style="display:none;"><div class="summary-label">体脂肪率</div><div><span class="summary-value" id="home-bodyfat">--</span><span class="summary-unit">%</span></div></div>
-    <div class="summary-item" id="home-mm-item" style="display:none;"><div class="summary-label">骨格筋率</div><div><span class="summary-value" id="home-muscle">--</span><span class="summary-unit">%</span></div></div>
-    <div class="summary-item" id="home-ba-item" style="display:none;"><div class="summary-label">体内年齢</div><div><span class="summary-value" id="home-bodyage">--</span><span class="summary-unit">歳</span></div></div>
   </div>
 
   <!-- Today's intake -->
@@ -1107,13 +1112,15 @@ function renderHome() {
     // 体脂肪率・体内年齢（プロフィールの値もフォールバック）
     const dispBodyFat = p.bodyFat != null ? p.bodyFat : state.profile.bodyFat;
     const dispMuscle = p.muscleMass != null ? p.muscleMass : state.profile.muscleMass;
+    // 体脂肪率バッジ
+    const bfBadge = document.getElementById('home-bf-badge');
     if (dispBodyFat != null && dispBodyFat > 0) {
       p.bodyFat = dispBodyFat;
-      document.getElementById('home-bodyfat').textContent = dispBodyFat.toFixed(1);
-      document.getElementById('home-bf-item').style.display = '';
-    } else { document.getElementById('home-bf-item').style.display = 'none'; }
-    document.getElementById('home-mm-item').style.display = 'none';
-    // 体内年齢の推定（BMI・体脂肪率・骨格筋率から簡易計算）
+      bfBadge.textContent = '体脂肪率 ' + dispBodyFat.toFixed(1) + '%';
+      bfBadge.style.display = '';
+    } else { bfBadge.style.display = 'none'; }
+    // 体内年齢バッジ
+    const baBadge = document.getElementById('home-ba-badge');
     if (dispBodyFat != null && dispBodyFat > 0 && p.birthdate) {
       const realAge = calcAge(p.birthdate);
       const idealBF = state.profile.gender === 'male' ? 20 : 25;
@@ -1125,9 +1132,9 @@ function renderHome() {
         bodyAge -= (dispMuscle - idealMM) * 0.4;
       }
       bodyAge = Math.max(realAge - 15, Math.min(realAge + 15, Math.round(bodyAge)));
-      document.getElementById('home-bodyage').textContent = bodyAge;
-      document.getElementById('home-ba-item').style.display = '';
-    } else { document.getElementById('home-ba-item').style.display = 'none'; }
+      baBadge.textContent = '体内年齢 ' + bodyAge + '歳';
+      baBadge.style.display = '';
+    } else { baBadge.style.display = 'none'; }
 
     // Today intake
     const todayStr = formatDate(today);
