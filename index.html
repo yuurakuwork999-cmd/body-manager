@@ -1174,129 +1174,34 @@ function renderHome() {
     const remaining = Math.round(tdee) - totals.kcal;
     document.getElementById('home-remaining').textContent = remaining >= 0 ? `あと ${remaining} kcal` : `${Math.abs(remaining)} kcal オーバー`;
 
-    // 過去7日間のデータ取得
-    const weekData = [];
-    for (let d = 1; d <= 7; d++) {
-      const dt = new Date(today); dt.setDate(dt.getDate() - d);
-      const ds = formatDate(dt);
-      const dt2 = getDayTotals(ds);
-      if (dt2.kcal > 0) weekData.push({ date: ds, kcal: dt2.kcal, protein: dt2.protein });
-    }
-    const weekAvgKcal = weekData.length ? Math.round(weekData.reduce((s,d)=>s+d.kcal,0) / weekData.length) : 0;
-    const weekAvgProt = weekData.length ? Math.round(weekData.reduce((s,d)=>s+d.protein,0) / weekData.length) : 0;
-    const yesterdayData = weekData.length ? weekData[0] : null;
-
-    // 現時点の食事評価
+    // 食事評価（シンプル版）
     const evalEl = document.getElementById('home-eval');
     if (totals.kcal > 0) {
-      const kcalRatio = totals.kcal / tdee;
-      const protRatio = totals.protein / prot;
-      let evalText = '';
-      let evalBg = '';
-
-      const hour = today.getHours();
-      let expectedRatio = 0;
-      if (hour >= 20) expectedRatio = 0.9;
-      else if (hour >= 15) expectedRatio = 0.7;
-      else if (hour >= 12) expectedRatio = 0.45;
-      else expectedRatio = 0.25;
-
+      const kcalPctVal = Math.round(totals.kcal / tdee * 100);
+      const protPctVal = Math.round(totals.protein / prot * 100);
       const remainKcal = Math.round(tdee - totals.kcal);
       const remainProt = Math.round(prot - totals.protein);
+      let lines = [];
+      let evalBg = 'var(--accent-bg)';
 
-      // 週間トレンドによる補正コメント
-      let weekComment = '';
-      if (weekData.length >= 3) {
-        const weekKcalRatio = weekAvgKcal / tdee;
-        if (yesterdayData && yesterdayData.kcal > tdee * 1.15) {
-          weekComment = `昨日は${yesterdayData.kcal}kcalと多めだったので、今日は少し控えめでも大丈夫。`;
-        } else if (yesterdayData && yesterdayData.kcal < tdee * 0.7) {
-          weekComment = `昨日は${yesterdayData.kcal}kcalと少なめだったので、今日は多少オーバーしても問題ありません。`;
-        } else if (weekKcalRatio > 1.1) {
-          weekComment = `この1週間は平均${weekAvgKcal}kcalとやや多めの傾向です。少し意識して調整しましょう。`;
-        } else if (weekKcalRatio < 0.8) {
-          weekComment = `この1週間は平均${weekAvgKcal}kcalと控えめです。無理しすぎず、しっかり栄養を摂ることも大切です。`;
-        } else if (weekKcalRatio >= 0.9 && weekKcalRatio <= 1.05) {
-          weekComment = `この1週間の平均${weekAvgKcal}kcalは目標にぴったり。とても良い食習慣です。`;
-        }
-        // 週間タンパク質
-        const weekProtRatio = weekAvgProt / prot;
-        if (weekProtRatio < 0.7) {
-          weekComment += ` 週間のタンパク質は平均${weekAvgProt}gで不足気味。毎食少しずつ意識してみて。`;
-        }
-      }
-
-      // 今日のカロリー評価
-      if (kcalRatio > 1.2) {
-        evalText = `本日の目標を${Math.round(totals.kcal - tdee)}kcalオーバーしています。`;
-        if (yesterdayData && yesterdayData.kcal < tdee * 0.8) {
-          evalText += `ただ昨日は控えめだったので、2日トータルで見ればバランスは取れています。夜は軽めに。`;
-        } else {
-          evalText += `夜は消化の良いスープや温野菜など、胃に負担の少ないものを選ぶと明日に響きにくいですよ。`;
-        }
+      // カロリー
+      if (kcalPctVal > 100) {
+        lines.push(`⚠ カロリー ${Math.round(totals.kcal - tdee)}kcalオーバー`);
         evalBg = 'var(--warn-bg)';
-      } else if (kcalRatio > 1.0) {
-        evalText = `目標を${Math.round(totals.kcal - tdee)}kcal超えていますが、`;
-        if (weekData.length >= 3 && weekAvgKcal < tdee * 0.95) {
-          evalText += `週間では控えめに推移しているので、このくらいは問題ありません。リラックスして過ごしましょう。`;
-          evalBg = 'var(--accent-bg)';
-        } else {
-          evalText += `この後の間食を控えめにすればリカバリーできます。明日の朝は軽めにスタートしましょう。`;
-          evalBg = 'var(--warn-bg)';
-        }
-      } else if (kcalRatio > expectedRatio + 0.2) {
-        evalText = `この時間帯にしてはややハイペースです。残り約${remainKcal}kcalなので、次の食事はサラダやスープを中心に調整してみましょう。`;
-        evalBg = 'var(--warn-bg)';
-      } else if (hour >= 20 && kcalRatio >= 0.8 && kcalRatio <= 1.05) {
-        evalText = `素晴らしいバランスです！目標の${Math.round(kcalRatio*100)}%で、とても良いペースです。`;
-        evalBg = 'var(--accent-bg)';
-      } else if (hour >= 20 && kcalRatio < 0.6) {
-        evalText = `カロリーが目標の${Math.round(kcalRatio*100)}%とかなり少なめです。`;
-        if (weekData.length >= 3 && weekAvgKcal > tdee * 1.05) {
-          evalText += `ただ週間で見るとバランスは取れています。極端な制限にならないよう気をつけて。`;
-        } else {
-          evalText += `極端な制限は代謝が落ちる原因に。ヨーグルトやナッツなど栄養価の高いものを少し補給しましょう。`;
-        }
-        evalBg = 'var(--warn-bg)';
-      } else if (hour >= 20 && kcalRatio < 0.8) {
-        evalText = `やや少なめの${Math.round(kcalRatio*100)}%です。まだ${remainKcal}kcal余裕があるので、消化の良いものを軽く食べてもOK。`;
-        evalBg = 'var(--warn-bg)';
-      } else if (hour < 12) {
-        evalText = `朝の時点で${totals.kcal}kcal摂取。残り約${remainKcal}kcalを昼食と夕食に振り分けましょう。`;
-        evalBg = 'var(--accent-bg)';
-      } else if (hour < 15) {
-        evalText = `ここまで${totals.kcal}kcal、目標の${Math.round(kcalRatio*100)}%を消化。いいペースです。夕食に${remainKcal}kcalほど使えます。`;
-        evalBg = 'var(--accent-bg)';
       } else {
-        evalText = `${Math.round(kcalRatio*100)}%消化して残り${remainKcal}kcal。順調です。夕食でタンパク質を意識するとさらに良いバランスに。`;
-        evalBg = 'var(--accent-bg)';
+        lines.push(`カロリー ${kcalPctVal}%（残り${remainKcal}kcal）`);
       }
 
-      // タンパク質評価（時間帯を問わず表示）
-      const protComment = [];
-      if (protRatio >= 1.0) {
-        protComment.push(`タンパク質${Math.round(totals.protein)}g、目標達成です！筋肉の維持・回復にバッチリ。`);
-      } else if (protRatio >= 0.8) {
-        protComment.push(`タンパク質${Math.round(totals.protein)}g（目標の${Math.round(protRatio*100)}%）、あと${remainProt}gで達成。ゆで卵1個やプロテインで届きます。`);
-      } else if (hour < 12 && protRatio > 0) {
-        protComment.push(`タンパク質は${Math.round(totals.protein)}g。朝からタンパク質を摂れているのは良い習慣です。残り${remainProt}gを昼・夕で意識して。`);
-      } else if (hour < 15) {
-        protComment.push(`タンパク質${Math.round(totals.protein)}g（目標の${Math.round(protRatio*100)}%）。夕食で肉・魚・卵を取り入れて、あと${remainProt}gを目指しましょう。`);
-      } else if (protRatio < 0.4) {
-        protComment.push(`タンパク質が${Math.round(totals.protein)}gとかなり不足（目標の${Math.round(protRatio*100)}%）。あと${remainProt}g必要です。鶏肉・魚・豆腐・プロテインで補いましょう。`);
-      } else if (protRatio < 0.6) {
-        protComment.push(`タンパク質${Math.round(totals.protein)}g、あと${remainProt}g不足気味。夕食に肉や魚メインの一品を追加するのがおすすめ。`);
+      // タンパク質
+      if (protPctVal >= 100) {
+        lines.push(`タンパク質 目標達成！（${Math.round(totals.protein)}g）`);
       } else {
-        protComment.push(`タンパク質${Math.round(totals.protein)}g（${Math.round(protRatio*100)}%）。もう少しで目標に届きます。`);
+        lines.push(`タンパク質 ${protPctVal}%（あと${remainProt}g）`);
       }
-      if (protComment.length) evalText += '\n' + protComment.join(' ');
-
-      // 週間トレンドコメントを追加
-      if (weekComment) evalText += '\n' + weekComment;
 
       evalEl.style.display = '';
       evalEl.style.background = evalBg;
-      evalEl.innerHTML = evalText.replace(/\n/g, '<br>');
+      evalEl.innerHTML = lines.join('<br>');
     } else {
       evalEl.style.display = 'none';
     }
