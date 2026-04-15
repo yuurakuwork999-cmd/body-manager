@@ -1546,7 +1546,7 @@ async function analyzeMeal() {
 食事の内容からカロリーとタンパク質を計算してください。${constList}
 
 以下のJSON形式のみで返してください（他のテキストは不要）：
-{"items":[{"name":"食品名（分量込み。例：白米150g、ゆで卵1個）","kcal":数値,"protein_g":数値}],"total_kcal":数値,"total_protein_g":数値,"mode":"add"か"replace"}
+{"items":[{"name":"食品名（簡潔に。例：白米、ゆで卵、味噌汁）","kcal":数値,"protein_g":数値}],"total_kcal":数値,"total_protein_g":数値,"mode":"add"か"replace"}
 
 modeについて：
 - "add": 新しい食品だけを追加する（既存の食品はitemsに含めないこと。追加分のみ返す）
@@ -2225,7 +2225,7 @@ ${context}
 3. 運動と食事の組み合わせについて
 4. 今後に向けてのアドバイス
 
-300文字以内で簡潔にまとめてください。`;
+200文字以内で簡潔にまとめてください。`;
 
     const result = await callGemini(prompt);
     saveAiHistoryItem('analysis', '過去' + days + '日の分析', result);
@@ -2282,7 +2282,7 @@ async function sendChat() {
 - 具体的な食品名・量・栄養素の数値を出すこと
 - ユーザーの目標カロリー・タンパク質に合わせた提案をすること
 - 親しみやすく、でも専門家としての信頼感のある口調で話すこと
-- 300文字以内で簡潔にまとめること
+- 200文字以内で簡潔にまとめること
 - これまでの会話の流れを踏まえて回答すること
 - 自己紹介は不要。いきなり本題に入ること
 
@@ -2291,7 +2291,7 @@ ${miniContext}${convHistory}
 【相談内容】
 ${input}
 
-日本語で300文字以内で答えてください。`;
+日本語で200文字以内で答えてください。`;
 
     const result = await callGemini(prompt);
     chatConversation.push({ q: input, a: result });
