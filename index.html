@@ -1523,11 +1523,11 @@ async function analyzeMeal() {
     // Build personal constants for system prompt
     let constList = '';
     if (state.personalConstants.length) {
-      constList = '\n以下のよく食べる食材を優先して使用してください：\n' +
+      constList = '\n【よく食べる食材リスト】（ユーザー入力にこれらの名称が明示的に含まれる場合のみ使用）：\n' +
         state.personalConstants.map(c => `${c.name}: ${c.kcal}kcal, タンパク質${c.protein_g}g`).join('\n');
     }
     if (state.recipes.length) {
-      constList += '\n以下のマイレシピも参照してください：\n' +
+      constList += '\n【マイレシピリスト】（ユーザー入力にレシピ名が明示的に含まれる場合のみ使用。曖昧な入力では絶対に使わないこと）：\n' +
         state.recipes.map(r => `${r.name}（${r.ingredients}）: ${r.kcal}kcal, タンパク質${r.protein_g}g`).join('\n');
     }
 
@@ -1544,6 +1544,11 @@ async function analyzeMeal() {
 
     const systemPrompt = `あなたは栄養管理アシスタントです。
 食事の内容からカロリーとタンパク質を計算してください。${constList}
+
+【重要ルール】
+1. ユーザー入力にkcalやタンパク質の数値が明示されている場合（例：「お菓子 300kcal」「プロテインバー 20g」）、その数値をそのまま使用してください。勝手にマイレシピや食材リストから置き換えたり紐付けたりしないでください。入力された食品名（例：「お菓子」）もそのまま使ってください。
+2. マイレシピや食材リストを使用するのは、ユーザーがその名称を明示的に入力した場合のみです。「お菓子」「おやつ」「夕食」のような曖昧・総称的な入力では絶対にリストから選ばないでください。
+3. リストに該当するものがない場合は、入力された食品名をそのまま使い、一般的な値で推定してください。
 
 以下のJSON形式のみで返してください（他のテキストは不要）：
 {"items":[{"name":"食品名（簡潔に。例：白米、ゆで卵、味噌汁）","kcal":数値,"protein_g":数値}],"total_kcal":数値,"total_protein_g":数値,"mode":"add"か"replace"}
