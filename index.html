@@ -476,17 +476,17 @@ a { color: var(--accent); }
     <div id="home-greeting" style="font-weight:500;"></div>
   </div>
   <div class="card">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="heading-sm">現在の体重</div>
-      <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
+    <div class="heading-sm" style="margin-bottom:10px;">現在の体重</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <div>
+        <div style="font-size:36px;font-weight:500;" id="home-weight">--</div>
+        <div class="text-muted" id="home-weight-date">記録なし</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0;">
         <span class="badge" id="home-bmi-badge" style="background:#E8F0E8;color:#4A7A4A;"></span>
         <span class="badge" id="home-bf-badge" style="background:#E4E8F8;color:#4A5A8A;display:none;"></span>
         <span class="badge" id="home-ba-badge" style="background:#F8E4E8;color:#8A4A5A;display:none;"></span>
       </div>
-    </div>
-    <div>
-      <div style="font-size:36px;font-weight:500;" id="home-weight">--</div>
-      <div class="text-muted" id="home-weight-date">記録なし</div>
     </div>
   </div>
   <div class="summary-grid">
@@ -1186,17 +1186,17 @@ function renderHome() {
 
       // カロリー
       if (kcalPctVal > 100) {
-        lines.push(`⚠ カロリー ${Math.round(totals.kcal - tdee)}kcalオーバー`);
+        lines.push(`⚠ カロリー ${Math.round(totals.kcal - tdee)}kcalオーバー（目標 ${Math.round(tdee)}kcal）`);
         evalBg = 'var(--warn-bg)';
       } else {
-        lines.push(`カロリー ${kcalPctVal}%（残り${remainKcal}kcal）`);
+        lines.push(`カロリー ${kcalPctVal}%（残り${remainKcal}kcal / 目標 ${Math.round(tdee)}kcal）`);
       }
 
       // タンパク質
       if (protPctVal >= 100) {
-        lines.push(`タンパク質 目標達成！（${Math.round(totals.protein)}g）`);
+        lines.push(`タンパク質 目標達成！（${Math.round(totals.protein)}g / 目標 ${Math.round(prot)}g）`);
       } else {
-        lines.push(`タンパク質 ${protPctVal}%（あと${remainProt}g）`);
+        lines.push(`タンパク質 ${protPctVal}%（あと${remainProt}g / 目標 ${Math.round(prot)}g）`);
       }
 
       evalEl.style.display = '';
@@ -1398,7 +1398,9 @@ function getMealTypeLabel() {
 function renderDayTotals() {
   const totals = getDayTotals(mealDate);
   const p = getCalcProfile();
-  const tdee = calcTDEE(p);
+  // ホーム画面と揃えるため、今日の日付のときは運動加味のTDEEを使用
+  const todayStr = formatDate(new Date());
+  const tdee = (mealDate === todayStr) ? calcTodayTDEE(p) : calcTDEE(p);
   document.getElementById('meal-day-kcal').textContent = totals.kcal;
   document.getElementById('meal-day-protein').textContent = totals.protein;
   const remaining = Math.round(tdee) - totals.kcal;
